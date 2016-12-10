@@ -5,13 +5,13 @@
             "name": "C++ Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/a.exe",
+            "program": "${workspaceRoot}/a.out",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [],
             "externalConsole": true,
-            "preLaunchTask": "g++",
+            "preLaunchTask": "clang++",
             "linux": {
                 "MIMode": "gdb",
                 "setupCommands": [
