@@ -1,15 +1,21 @@
 {
-   "version": "0.1.0",
-    "windows": {
-        "command": "build.bat",
+    "version": "0.1.0",
+    "windows": { //Use build.bat for linker
+        "command": "g++",
+        "args": [
+            "-Wall",
+            "main.cpp",
+            "-g"
+        ],
         "isShellCommand": true,
-        "showOutput": "always"        
+        "showOutput": "silent"
     },
     "linux": {
         "command": "g++",
         "args": [
             "-Wall",
-            "main.cpp"
+            "main.cpp",
+            "-g"
         ],
         "isShellCommand": true,
         "showOutput": "always",
@@ -28,7 +34,7 @@
                 "message": 5
             }
         }
-    },    
+    },
     "osx": {
         "command": "clang++",
         "args": [
