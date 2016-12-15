@@ -1,5 +1,6 @@
 #include <iostream>
 #include <imebra/imebra.h>
+#include "DICOM.h"
 
 using namespace imebra;
 
