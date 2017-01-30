@@ -12,7 +12,11 @@
         }
     }, {
         "name": "Linux",
-        "includePath": ["/usr/include"],
+        "includePath": [
+            "/usr/include",
+            "/usr/local/include",
+            "/usr/local/lib"
+            ],
         "browse": {
             "limitSymbolsToIncludedHeaders": true,
             "databaseFilename": ""
