@@ -3,7 +3,9 @@ project(cardiac_imaging)
 
 include(CMakeToolsHelpers OPTIONAL)
 
-find_library(imebra_library NAMES imebra libimebra HINTS ${CMAKE_BINARY_DIR} /usr/local/lib)
+find_library(imebra_library NAMES imebra libimebra HINTS ${CMAKE_BINARY_DIR} /usr/local/)
+find_package(OpenCV REQUIRED)
+
 set(IMEBRA_HEADERS /usr/local/includes/imebra)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -23,5 +25,6 @@ include_directories(include)
 
 #However, the file(GLOB...) allows for wildcard additions:
 file(GLOB SOURCES "src/*.cpp")
-add_executable(testCardiac ${SOURCES})
-target_link_libraries(testCardiac ${IMEBRA_LIBRARIES})
+add_executable(project ${SOURCES})
+target_link_libraries(project ${OpenCV_LIBS} )
+target_link_libraries(project ${IMEBRA_LIBRARIES})

@@ -1,0 +1,36 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    // ROOT WITHOUT COMMAND
+    "version": "0.1.0",
+    "isShellCommand": true,
+    "showOutput": "always",
+    "args": [],
+    "options": {
+        "cwd": "${workspaceRoot}/build/"
+    },
+    "linux": {
+        "command": "bash",
+        "args": ["-c"],
+        "isShellCommand": true,
+        "showOutput": "always",
+        "suppressTaskName": true,
+        "options": {
+            "cwd": "${workspaceRoot}/build/"
+        },
+        "tasks": [
+            {
+                "taskName": "build",
+                "args": [
+                    "make project"
+                ]
+            },
+            {
+                "taskName": "clean",
+                "args": [
+                    "make clean"
+                ]
+            }
+        ]
+    }
+}
