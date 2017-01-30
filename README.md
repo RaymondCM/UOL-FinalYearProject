@@ -28,9 +28,21 @@ make
 sudo make install
 ```
 
-##Installation
-From project root run.
+## Installation
+From project root run. Or use [CMake for VSCode](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools).
 
 ```
 cmake -H./ -B./build -C./build/CMakeTools/InitializeCache.cmake "-GUnix Makefiles"
+cd build/
+cmake ..
+make
+```
+
+## Execute
+From project root.
+
+```
+cd build/
+make project
+./project
 ```
