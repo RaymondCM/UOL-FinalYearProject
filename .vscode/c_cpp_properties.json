@@ -3,7 +3,7 @@
         "name": "Mac",
         "includePath": [
             "/usr/include",
-            "usr/local/include",
+            "/usr/local/include",
             "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include"
         ],
         "browse": {
@@ -15,7 +15,8 @@
         "includePath": [
             "/usr/include",
             "/usr/local/include",
-            "/usr/local/lib"
+            "/usr/local/lib",
+            "${workspaceRoot}/include"
             ],
         "browse": {
             "limitSymbolsToIncludedHeaders": true,

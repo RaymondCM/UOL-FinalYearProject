@@ -5,13 +5,13 @@
             "name": "C++ Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build/project",
+            "program": "${workspaceRoot}/build/ProjectY3",
             "preLaunchTask": "build",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [],
-            "externalConsole": true,
+            "externalConsole": false,
             "linux": {
                 "MIMode": "gdb",
                 "setupCommands": [
@@ -40,7 +40,7 @@
             "name": "C++ Attach",
             "type": "cppdbg",
             "request": "attach",
-            "program": "${workspaceRoot}/build/project",
+            "program": "${workspaceRoot}/build/ProjectY3",
             "processId": "${command.pickProcess}",
             "linux": {
                 "MIMode": "gdb",

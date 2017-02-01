@@ -22,7 +22,7 @@
             {
                 "taskName": "build",
                 "args": [
-                    "make project"
+                    "make ProjectY3"
                 ]
             },
             {

@@ -1,15 +1,16 @@
 # ParallelCardiacImaging
 
 ## Dependencies		
-### imebra 		
-For OSX/Linux download the [C++ Source](https://imebra.com/get-it/) and run the following commands to install under `usr/include`, replace `imebra_source` with the source location. For other platforms instructions can be found on imebra [docs](https://imebra.readthedocs.io/en/stable/compiling_imebra.html)	
-		
+### DCMTK 		
+Instructions below for Ubuntu 14.04, the stable release has [compiler issues](http://forum.dcmtk.org/viewtopic.php?f=1&t=4235) so a snapshot from GitHub is used. 
+
 ```
-mkdir imebra_bin
-cd imebra_bin/
-cmake imebra_source/library/
+wget http://git.dcmtk.org/?p=dcmtk.git;a=snapshot;h=681e3182ccfe3873b95824b07a4565c8b54a8a18;sf=tgz
+tar xzvf index.html\?p=dcmtk.git\;a=snapshot\;h=681e3182ccfe3873b95824b07a4565c8b54a8a18\;sf=tgz
+cmake-gui & #Configure and Generate make files to build_folder
+cd build_folder
 cmake --build .
-make
+make #(Optional?)
 sudo make install
 ```
 
@@ -43,6 +44,6 @@ From project root.
 
 ```
 cd build/
-make project
-./project
+make ProjectY3
+./ProjectY3
 ```
