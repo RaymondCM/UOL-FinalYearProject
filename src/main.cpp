@@ -1,10 +1,24 @@
-#include <stdio.h>
-#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <string>
 
-using namespace cv;
+#include "DICOM.h"
 
-int main(int argc, char** argv )
+#include "dcmtk/dcmimgle/dcmimage.h"
+
+int main()
 {
-    waitKey(0);
+    std::string pathRoot;
+
+    #ifdef SOURCE_CODE_LOCATION
+        pathRoot = SOURCE_CODE_LOCATION;
+    #endif
+
+    std::string fullPath {pathRoot + "/IM_0068-Bmode"};
+    DicomImage *image = new DicomImage(fullPath.c_str());
+
+    if(image->getStatus() == EIS_Normal) {
+        cout << "Normal Image";
+    }
+
     return 0;
 }
