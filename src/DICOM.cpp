@@ -23,15 +23,15 @@ DICOM::~DICOM() {
 void DICOM::captureVideoFrames()
 {
     cv::VideoCapture capture(this->filePath);
-    cv::Mat frame;
+    cv::Mat frame, grayFrame;
 
     if (capture.isOpened())
     {
         do
         {
             capture.read(frame);
-            this->frames.push_back(frame.clone());
-
+            cvtColor(frame, grayFrame, cv::COLOR_BGR2GRAY);
+            this->frames.push_back(grayFrame.clone());
         } while (!frame.empty());
     }
 

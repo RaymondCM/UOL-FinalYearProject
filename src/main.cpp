@@ -12,8 +12,9 @@ int main()
     srcPath = SOURCE_CODE_LOCATION;
 #endif
 
-    std::string filePath {srcPath + "/input.avi"};
+    std::string filePath{srcPath + "/input.avi"};
     DICOM images(filePath, true);
-    
+    images.playFrames(0U, 100U);
+    //Start Block Matching
     return 0;
 }
