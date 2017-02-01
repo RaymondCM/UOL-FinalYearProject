@@ -14,6 +14,17 @@
         "exception": "cpp",
         "typeinfo": "cpp",
         "clocale": "cpp",
-        "*h*h*hcwctype": "cpp"
+        "*h*h*hcwctype": "cpp",
+        "functional": "cpp",
+        "*hpp*hpp*h*h*h*h*h*h*hpp*hpp*hpparray": "cpp",
+        "array": "cpp",
+        "ostream": "cpp",
+        "string": "cpp",
+        "*h*hcsetjmp": "cpp",
+        "csignal": "cpp",
+        "vector": "cpp",
+        "*hpp*hpp*hpp*hpp*hpp*hpp*hpp*hpp*hpp*hinitializer_list": "cpp",
+        "*h*h*h*h*h*h*h*h*hpp*hpp*h*h*h*h*h*h*harray": "cpp",
+        "*h*h*h*h*h*h*h*h*h*harray": "cpp"
     }
 }
