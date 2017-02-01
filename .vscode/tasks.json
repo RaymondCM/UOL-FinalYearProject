@@ -9,9 +9,26 @@
     "options": {
         "cwd": "${workspaceRoot}/build/"
     },
+    "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": [
+            "relative",
+            "${workspaceRoot}"
+        ],
+        "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+        }
+    },
     "linux": {
         "command": "bash",
-        "args": ["-c"],
+        "args": [
+            "-c"
+        ],
         "isShellCommand": true,
         "showOutput": "always",
         "suppressTaskName": true,
@@ -21,6 +38,7 @@
         "tasks": [
             {
                 "taskName": "build",
+                "isBuildCommand": true,
                 "args": [
                     "make ProjectY3"
                 ]
