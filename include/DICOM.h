@@ -10,7 +10,9 @@ public:
   ~DICOM();
   cv::Mat getFrame(int);
   void playFrames(u_int, u_int, u_int = 20);
-  size_t getFrameCount(){return this->frameCount;};
+  size_t getFrameCount(){return this->frameCount;}
+  int getCols(int n = 0) {return this->getFrame(n).cols;}
+  int getRows(int n = 0) {return this->getFrame(n).rows;}
 private:
   std::string filePath;
   std::vector<cv::Mat> frames;
