@@ -13,10 +13,11 @@ DICOM::DICOM(std::string path, bool verbose)
     this->isVerbose = verbose;
     this->filePath = path;
     this->print("Set filepath to: " + path);
-    captureVideoFrames();
+    this->captureVideoFrames();
 }
 
-DICOM::~DICOM() {
+DICOM::~DICOM()
+{
     this->print("Object being deleted (DICOM)");
 }
 
@@ -45,7 +46,14 @@ void DICOM::captureVideoFrames()
 
 cv::Mat DICOM::getFrame(int frameNumber)
 {
-    return this->frames.at(frameNumber);
+    cv::Mat tmp = this->frames.at(frameNumber);
+
+    if (tmp.empty())
+    {
+        this->print("getFrame() failed for frame: " + std::to_string(frameNumber));
+    }
+
+    return tmp;
 }
 
 void DICOM::playFrames(u_int from, u_int to, u_int frameRate)
@@ -73,7 +81,7 @@ void DICOM::playFrames(u_int from, u_int to, u_int frameRate)
 
     std::string videoWindow = this->filePath;
     cv::namedWindow(videoWindow, cv::WINDOW_AUTOSIZE);
-    
+
     while (currentFrame < to)
     {
         frameDiff = to - currentFrame;
@@ -85,7 +93,7 @@ void DICOM::playFrames(u_int from, u_int to, u_int frameRate)
         cv::waitKey(50);
     }
 
-    cv::destroyWindow(this->filePath);
+    cv::destroyWindow(videoWindow);
 }
 
 void DICOM::print(std::string message)
