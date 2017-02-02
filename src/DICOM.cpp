@@ -80,7 +80,7 @@ void DICOM::playFrames(u_int from, u_int to, u_int frameRate)
     this->print(remainingTime);
 
     std::string videoWindow = this->filePath;
-    cv::namedWindow(videoWindow, cv::WINDOW_AUTOSIZE);
+    cv::namedWindow(videoWindow, cv::WINDOW_NORMAL);
 
     while (currentFrame < to)
     {
