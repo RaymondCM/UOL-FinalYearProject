@@ -107,7 +107,7 @@ void DICOM::exhastiveBlockMatch(int macro)
     cv::Mat referenceFrame, nextFrame, refBlock, nextBlock;
 
     int macroCenter = macro / 2;    
-    double baseSAD = 0, SAD = 999999, refSAD = 0;
+    double baseSAD = 0, SAD = 0, refSAD = 0;
 
     time_t tStart = time(0);
     this->capture >> nextFrame;
@@ -132,125 +132,38 @@ void DICOM::exhastiveBlockMatch(int macro)
                 baseSAD = cv::sum(refBlock - nextBlock)[0];
                 refSAD = baseSAD;
 
-                int up = y - macro, down = y + macro, left = x - macro, right = x + macro;
-
                 cv::Point refCenter(x + macroCenter, y + macroCenter);
                 cv::Point endPoint(x + macroCenter, y + macroCenter);
 
-                ///TODO: Major Refactor for efficiancy
-                cv::Rect block1(cv::Point(left, up), cv::Size(macro, macro));
-                cv::Rect block2(cv::Point(x, up), cv::Size(macro, macro));
-                cv::Rect block3(cv::Point(right, up), cv::Size(macro, macro));
-
-                cv::Rect block4(cv::Point(left, y), cv::Size(macro, macro));
-                cv::Rect block6(cv::Point(right, y), cv::Size(macro, macro));
-
-                cv::Rect block7(cv::Point(left, down), cv::Size(macro, macro));
-                cv::Rect block8(cv::Point(x, down), cv::Size(macro, macro));
-                cv::Rect block9(cv::Point(right, down), cv::Size(macro, macro));
-
-                if (this->isRectWithinBounds(block1, this->width, this->height))
+                for (int row = 0, x1 = 0, y1 = 0; row < 3; ++row)
                 {
-                    SAD = cv::sum(nextFrame(block1) - refBlock)[0];
-                    if (SAD < refSAD)
+                    x1 = (x - macro) + (macro * row);
+                    for (int col = 0; col < 3; ++col)
                     {
-                        refSAD = SAD;
-                        endPoint.x = block1.x + macro;
-                        endPoint.y = block1.y + macro;
+                        y1 = (y - macro) + (macro * col);
+
+                        if (x1 < 0 || y1 < 0 || x1 >= (int) this->width || y1 >= (int) this->height || (row == 1 && col == 1))
+                            break;
+
+                        SAD = cv::sum(nextFrame(cv::Rect(x1, y1, macro, macro)) - refBlock)[0];
+
+                        if (SAD < refSAD)
+                        {
+                            refSAD = SAD;
+                            endPoint.x = x1 + macroCenter;
+                            endPoint.y = y1 + macroCenter;
+                        }
                     }
                 }
 
-                if (this->isRectWithinBounds(block2, this->width, this->height))
-                {
-                    SAD = cv::sum(nextFrame(block2) - refBlock)[0];
-                    if (SAD < refSAD)
-                    {
-                        refSAD = SAD;
-                        endPoint.x = block2.x + macroCenter;
-                        endPoint.y = block2.y + macro;
-                    }
-                }
-
-                if (this->isRectWithinBounds(block3, this->width, this->height))
-                {
-                    SAD = cv::sum(nextFrame(block3) - refBlock)[0];
-                    if (SAD < refSAD)
-                    {
-                        refSAD = SAD;
-                        endPoint.x = block3.x;
-                        endPoint.y = block3.y + macro;
-                    }
-                }
-
-                if (this->isRectWithinBounds(block4, this->width, this->height))
-                {
-                    SAD = cv::sum(nextFrame(block4) - refBlock)[0];
-                    if (SAD < refSAD)
-                    {
-                        refSAD = SAD;
-                        endPoint.x = block4.x + macro;
-                        endPoint.y = block4.y + macroCenter;
-                    }
-                }
-
-                if (this->isRectWithinBounds(block6, this->width, this->height))
-                {
-                    SAD = cv::sum(nextFrame(block6) - refBlock)[0];
-                    if (SAD < refSAD)
-                    {
-                        refSAD = SAD;
-                        endPoint.x = block6.x;
-                        endPoint.y = block6.y + macroCenter;
-                    }
-                }
-
-                if (this->isRectWithinBounds(block7, this->width, this->height))
-                {
-                    SAD = cv::sum(nextFrame(block7) - refBlock)[0];
-                    if (SAD < refSAD)
-                    {
-                        refSAD = SAD;
-                        endPoint.x = block7.x + macro;
-                        endPoint.y = block7.y;
-                    }
-                }
-
-                if (this->isRectWithinBounds(block8, this->width, this->height))
-                {
-                    SAD = cv::sum(nextFrame(block8) - refBlock)[0];
-                    if (SAD < refSAD)
-                    {
-                        refSAD = SAD;
-                        endPoint.x = block8.x + macroCenter;
-                        endPoint.y = block8.y;
-                    }
-                }
-
-                if (this->isRectWithinBounds(block9, this->width, this->height))
-                {
-                    SAD = cv::sum(nextFrame(block9) - refBlock)[0];
-                    if (SAD < refSAD)
-                    {
-                        refSAD = SAD;
-                        endPoint.x = block9.x;
-                        endPoint.y = block9.y;
-                    }
-                }
-
-                if (baseSAD <= refSAD)
-                {
-                    endPoint = refCenter;
-                }
-
-                cv::rectangle(referenceFrame, border, cv::Scalar(55,55,55, 0));
-                cv::arrowedLine(referenceFrame, refCenter, endPoint, cv::Scalar(255,255,255));
+                cv::rectangle(referenceFrame, border, cv::Scalar(20, 20, 20));
+                cv::arrowedLine(referenceFrame, refCenter, baseSAD <= refSAD ? refCenter : endPoint, cv::Scalar(200, 200, 0));
             }
         }
 
         cv::imshow(this->filePath, referenceFrame);
     }
 
-    std::cout << "FPS (Exhastive Block Search): " << (double) this->frameCount / difftime(time(0), tStart) << std::endl;
-
+    std::cout << "FPS (Sequential): " << (double) this->frameCount / difftime(time(0), tStart) << std::endl;
     this->capture.release();
 }
