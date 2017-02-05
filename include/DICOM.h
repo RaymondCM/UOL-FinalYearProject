@@ -6,18 +6,22 @@ class DICOM
 {
 public:
   DICOM(std::string);
-  DICOM(std::string, bool);
+  DICOM(std::string, bool = false);
   ~DICOM();
-  cv::Mat getFrame(int);
+  void openCapture();
+  cv::Mat getFrameFromCaptured(int);
   void playFrames(u_int, u_int, u_int = 20);
   size_t getFrameCount(){return this->frameCount;}
-  int getCols(int n = 0) {return this->getFrame(n).cols;}
-  int getRows(int n = 0) {return this->getFrame(n).rows;}
+  int getColsOfCaptured(int n = 0) {return this->getFrameFromCaptured(n).cols;}
+  int getRowsOfCaptured(int n = 0) {return this->getFrameFromCaptured(n).rows;}
+  bool isRectWithinBounds(cv::Rect, int, int);
+  void exhastiveBlockMatch(int = 40);
+  void captureFrames();
 private:
   std::string filePath;
   std::vector<cv::Mat> frames;
+  cv::VideoCapture capture;
   bool isVerbose;
-  size_t frameCount = 0;
-  void captureVideoFrames();
+  u_int frameCount = 0, width, height;
   void print(std::string);
 };
