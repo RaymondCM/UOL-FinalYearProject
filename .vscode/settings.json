@@ -25,6 +25,12 @@
         "vector": "cpp",
         "*hpp*hpp*hpp*hpp*hpp*hpp*hpp*hpp*hpp*hinitializer_list": "cpp",
         "*h*h*h*h*h*h*h*h*hpp*hpp*h*h*h*h*h*h*harray": "cpp",
-        "*h*h*h*h*h*h*h*h*h*harray": "cpp"
+        "*h*h*h*h*h*h*h*h*h*harray": "cpp",
+        "*hpp*hpp*hpp*hpp*hpp*hpp*hpp*h*hpp*hpp*h*hpp*hpp*h*harray": "cpp",
+        "*hpp*hpp*hpp*hpp*hpputility": "cpp",
+        "utility": "cpp",
+        "*hppistream": "cpp",
+        "istream": "cpp",
+        "tuple": "cpp"
     }
 }
