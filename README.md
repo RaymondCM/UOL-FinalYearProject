@@ -15,12 +15,28 @@ sudo make install
 ```
 
 ### OpenCV
+#### Windows
+Download the [OpenCV](https://github.com/opencv/opencv) source and build with cmake (See instructions below). Build the binaries for debug and release to "C:/OpenCV/build" with OPENCL. Build INSTALL to produce system headers and dynamic linked libraries. Add a system environment variable to the installed OpenCV_DIR (C:\OpenCV\build\install\x86\vc15 for Visual Studio 15 2017). Finally add a variable to system PATH (%OpenCV_DIR%/bin). See OpenCV [documentation](http://docs.opencv.org/2.4/doc/tutorials/introduction/windows_visual_studio_Opencv/windows_visual_studio_Opencv.html) for guidelines and resources.
+
+To build use CMake-GUI with these options WITH_CUDA=0, WITH_OPENCL=1 and BUILD_opencv_java=0. Optionally add both python interpreters.
+
+```
+cmake -H./ -BC:/OpenCV/build/ -G "Visual Studio 15 2017" -DWITH_CUDA=0 -DWITH_OPENCL=1 -DBUILD_opencv_java=0 #USE CMake-GUI
+```
+
+To set environment variables to installed location.
+
+```
+setx -m OpenCV_DIR C:\OpenCV\build\install\x86\vc15
+setx -m PATH=%PATH%;%OpenCV_DIR%\bin
+```
+
+When compiling add ```-DCMAKE_PREFIX_PATH=C:\OpenCV\build\install``` for ProjectY3 target when OpenCV cannot be found.
+
+#### Linux (Ubuntu)
 For OSX/Linux download the [C++ Source](http://opencv.org/downloads.html) and run the following commands to install under `usr/local`, replace `opencv_downloaded_source` with the source location. For other platforms instructions can be found on imebra [docs](http://docs.opencv.org/2.4/doc/tutorials/introduction/table_of_content_introduction/table_of_content_introduction.html)	
  
 ```
-sudo apt-get install build-essential
-sudo apt-get install cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
-sudo apt-get install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
 cd opencv_downloaded_source
 mkdir opencv_bin
 cd opencv_bin
@@ -29,21 +45,22 @@ make
 sudo make install
 ```
 
-## Installation
-From project root run. Or use [CMake for VSCode](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools).
+OpenCV dependencies (ubuntu) listed below.
+
+``` 
+sudo apt-get install build-essential
+sudo apt-get install cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
+```
+
+## Compile
+On ubuntu from project root run ```cmake -H./ -B./build``` or use [CMake for VSCode](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools).
+
+To execute the program type the following code from the root of the file structure.
 
 ```
-cmake -H./ -B./build -C./build/CMakeTools/InitializeCache.cmake "-GUnix Makefiles"
 cd build/
-cmake ..
-make
-```
-
-## Execute
-From project root.
-
-```
-cd build/
+make clean #OPTIONAL
 make ProjectY3
 ./ProjectY3
 ```
