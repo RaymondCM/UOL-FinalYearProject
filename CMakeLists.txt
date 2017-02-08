@@ -10,26 +10,27 @@ add_definitions(-DHAVE_CONFIG_H)
 #Add root to be used in the source code
 add_definitions(-DSOURCE_CODE_LOCATION="${CMAKE_SOURCE_DIR}")
 
-#Find both packages
-find_package(DCMTK REQUIRED)
+#Find both packages (If windows point find_package to install location)
+find_package(DCMTK)
+
+if (WIN32)
+	SET(CMAKE_PREFIX_PATH C:/OpenCV/build/install)
+endif()
+
 find_package(OpenCV REQUIRED)
 
-#Defne CPP flags
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    message(STATUS "MSVC detected, adding compile flags")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /Wp64")
-else()
-    message(STATUS "GCC|Clang detected, adding compile flags")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wpedantic -Wconversion -Wfloat-equal -pthread")
-endif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+MESSAGE( STATUS "OpenCV_DIR: " ${OpenCV_DIR})
+MESSAGE( STATUS "OpenCV_LIBS: " ${OpenCV_LIBS})
 
 #Include DCMTK headers and project headers
 include_directories(${DCMTK_INCLUDE_DIRS})
-include_directories(include)
 
 #Glob all source files
 file(GLOB SOURCES "src/*.cpp")
 add_executable(ProjectY3 ${SOURCES})
+
+#Add header files include directory
+target_include_directories(ProjectY3 PUBLIC "include")
 
 #Link library files
 target_link_libraries(ProjectY3 ${DCMTK_LIBRARIES} )
