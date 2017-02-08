@@ -2,6 +2,8 @@
 #include <vector>
 #include "opencv.h"
 
+typedef unsigned int u_int;
+
 class DICOM
 {
 public:
