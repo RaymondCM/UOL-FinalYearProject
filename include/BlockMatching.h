@@ -4,12 +4,11 @@
 
 typedef unsigned int u_int;
 
-class DICOM
+class BlockMatching
 {
 public:
-  DICOM(std::string);
-  DICOM(std::string, bool = false);
-  ~DICOM();
+  BlockMatching(std::string, bool = false);
+  ~BlockMatching();
   void openCapture();
   cv::Mat getFrameFromCaptured(int);
   void playFrames(u_int, u_int, u_int = 20);
@@ -17,8 +16,9 @@ public:
   int getColsOfCaptured(int n = 0) {return this->getFrameFromCaptured(n).cols;}
   int getRowsOfCaptured(int n = 0) {return this->getFrameFromCaptured(n).rows;}
   bool isRectWithinBounds(cv::Rect, int, int);
+  void sequentialBlockMatch(int = 40);
   void exhastiveBlockMatch(int = 40);
-  void captureFrames();
+  void captureFrames(); 
 private:
   std::string filePath;
   std::vector<cv::Mat> frames;

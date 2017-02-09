@@ -1,16 +1,17 @@
 #include <string>
-#include "DICOM.h"
+#include "BlockMatching.h"
+#include "opencv.h"
 
 int main()
 {
-    std::string srcPath;
+	std::string srcPath;
 
-    #ifdef SOURCE_CODE_LOCATION
-        srcPath = SOURCE_CODE_LOCATION;
-    #endif
+#ifdef SOURCE_CODE_LOCATION 
+	srcPath = SOURCE_CODE_LOCATION;
+#endif
 
-    DICOM frames(srcPath + "/input.avi", true);
+	BlockMatching frames(srcPath + "/input.avi", true);
+	frames.sequentialBlockMatch(50);
 
-    frames.exhastiveBlockMatch(40);
-    return 0;
+	return 0;
 }
