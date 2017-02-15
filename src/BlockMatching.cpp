@@ -1,6 +1,6 @@
 #include <iostream>
 #include <ctime>
-#include "BlockMatching.h"
+#include "BlockMatching.hpp"
 
 BlockMatching::BlockMatching(std::string path, bool verbose)
 {
