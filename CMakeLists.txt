@@ -22,8 +22,13 @@ find_package(OpenCV REQUIRED)
 MESSAGE( STATUS "OpenCV_DIR: " ${OpenCV_DIR})
 MESSAGE( STATUS "OpenCV_LIBS: " ${OpenCV_LIBS})
 
+find_package(OpenCL REQUIRED)
+MESSAGE( STATUS "OpenCL_INCLUDE_DIR: " ${OpenCL_INCLUDE_DIR})
+MESSAGE( STATUS "OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+
 #Include DCMTK headers and project headers
 include_directories(${DCMTK_INCLUDE_DIRS})
+include_directories(${OpenCL_INCLUDE_DIR})
 
 #Glob all source files
 file(GLOB SOURCES "src/*.cpp")
@@ -35,3 +40,4 @@ target_include_directories(ProjectY3 PUBLIC "include")
 #Link library files
 target_link_libraries(ProjectY3 ${DCMTK_LIBRARIES} )
 target_link_libraries(ProjectY3 ${OpenCV_LIBS} )
+target_link_libraries(ProjectY3 ${OpenCL_LIBRARIES} )
