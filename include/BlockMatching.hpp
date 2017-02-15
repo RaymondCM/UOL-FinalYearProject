@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
-#include "opencv.h"
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
 
 typedef unsigned int u_int;
 
