@@ -8,6 +8,16 @@
 
 int main(int argc, char **argv)
 {
-	std::cout << "SEQUENTIAL" << std::endl;
-	return 0;
+    std::string projectRoot(".");
+
+#ifdef PROJECT_ROOT
+    projectRoot = PROJECT_ROOT;
+#endif
+
+    std::string dataPath = projectRoot + "/data/input.avi";
+    BlockMatching frames(dataPath, true);
+
+    frames.sequentialBlockMatch(50);
+
+    return 0;
 }

@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-#Glob all source files
-add_executable(SequentialBlockMatching "src/main.cpp")
+#Set enviroment variable for target files location
+add_definitions(-DTARGET_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
+
+#Add all source files
+add_executable(SequentialBlockMatching "src/main.cpp" "src/BlockMatching.cpp")
 
 #Include target specific include directories
 target_include_directories(SequentialBlockMatching PUBLIC include)

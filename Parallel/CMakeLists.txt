@@ -1,9 +1,14 @@
+cmake_minimum_required(VERSION 2.8.9)
+
+#Set enviroment variable for target files location
+add_definitions(-DTARGET_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
+
 #Find OpenCL dependancy for ParallelBlockMatching
 find_package(OpenCL REQUIRED)
 MESSAGE( STATUS "OpenCL_INCLUDE_DIR: " ${OpenCL_INCLUDE_DIR})
 MESSAGE( STATUS "OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
 
-#Glob all source files
+#Add all source files
 add_executable(ParallelBlockMatching "src/main.cpp")
 
 #Include target specific include directories
