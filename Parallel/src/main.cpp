@@ -9,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
-#include "BlockMatching.hpp"
+//#include "BlockMatching.hpp"
 #include "CLContext.hpp"
 
 int main(int argc, char **argv)
@@ -24,6 +24,7 @@ int main(int argc, char **argv)
 	std::string dataPath = srcPath + "/data/input.avi";
 
 	CLContext clUtil(argc, argv);
+	clUtil.ListPlatforms();
 
 	try {
 		cl::Context context = clUtil.GetContext();
