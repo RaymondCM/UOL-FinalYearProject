@@ -11,8 +11,12 @@
 #include <CL/cl.h>
 #endif
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/ocl.hpp>
+#include <opencv2/core/utility.hpp>
+#include <opencv2/video.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/core/ocl.hpp>
 
 //#include "BlockMatching.hpp"
 #include "CLContext.hpp"
@@ -34,73 +38,104 @@ int main(int argc, char **argv)
     std::string dataPath = projectRoot + "/data/input.avi";
 
     CLContext clUtil(argc, argv);
-    clUtil.ListPlatforms();
 
     try
     {
-	cl::Context context = clUtil.GetContext();
+        cv::VideoCapture V(dataPath);
+        //cv::Mat prev, curr;
+        cv::Mat prev, curr;
+        V >> prev;
+        V >> curr;
 
-	//Create a queue to which we will push commands for the device
-	cl::CommandQueue queue(context, CL_QUEUE_PROFILING_ENABLE);
+        int width = V.get(cv::CAP_PROP_FRAME_WIDTH), height = V.get(cv::CAP_PROP_FRAME_HEIGHT);
+        cvtColor(prev, prev, cv::COLOR_BGR2GRAY);
+        cvtColor(curr, curr, cv::COLOR_BGR2GRAY);
 
-	//Load & build the device code
-	cl::Program::Sources sources;
-	clUtil.AddSources(sources, kernelFile);
+        cl_int res = CL_SUCCESS;
+        cl_uint num_entries = 0;
 
-	cl::Program program(context, sources);
+        res = clGetPlatformIDs(0, 0, &num_entries);
+        if (CL_SUCCESS != res)
+            return -1;
 
-	//Build and debug the kernel code
-	try
-	{
-	    program.build();
-	}
-	catch (const cl::Error &err)
-	{
-	    std::cout << "Build Status: " << program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
-	    std::cout << "Build Options:\t" << program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
-	    std::cout << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
-	    throw err;
-	}
+        std::cout << "Have OpenCL?: " << cv::ocl::haveOpenCL() << std::endl;
+        cv::ocl::setUseOpenCL(true);
 
-	//Memory allocation
-	//host - input
-	std::vector<int> A = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; //C++11 allows this type of initialisation
-	std::vector<int> B = {0, 1, 2, 0, 1, 2, 0, 1, 2, 0};
+        // cv::imshow("PREV", prev);
+        // cv::imshow("CURR", curr);
+        // cv::waitKey(50000);
 
-	size_t vector_elements = A.size();	   //number of elements
-	size_t vector_size = A.size() * sizeof(int); //size in bytes
+        if (!cv::ocl::haveOpenCL())
+        {
+            std::cout << "OpenCL is not avaiable..." << std::endl;
+            return -1;
+        }
 
-	//host - output
-	std::vector<int> C(vector_elements);
+        cv::ocl::Context context;
+        if (!context.create(cv::ocl::Device::TYPE_GPU))
+        {
+            std::cout << "Failed creating the context..." << std::endl;
+            return -1;
+        }
 
-	//device - buffers
-	cl::Buffer buffer_A(context, CL_MEM_READ_WRITE, vector_size);
-	cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, vector_size);
-	cl::Buffer buffer_C(context, CL_MEM_READ_WRITE, vector_size);
+        // In OpenCV 3.0.0 beta, only a single device is detected.
+        std::cout << context.ndevices() << " GPU devices are detected." << std::endl;
+        for (int i = 0; i < context.ndevices(); i++)
+        {
+            cv::ocl::Device device = context.device(i);
+            std::cout << "name                 : " << device.name() << std::endl;
+            std::cout << "available            : " << device.available() << std::endl;
+            std::cout << "imageSupport         : " << device.imageSupport() << std::endl;
+            std::cout << "OpenCL_C_Version     : " << device.OpenCL_C_Version() << std::endl;
+            std::cout << std::endl;
+        }
 
-	//Part 5 - device operations
+        // Select the first device
+        cv::ocl::Device(context.device(0));
 
-	//5.1 Copy arrays A and B to device memory
-	queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, vector_size, &A[0]);
-	queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, vector_size, &B[0]);
+        // Transfer Mat data to the device
+        cv::Mat mat_src = prev;
+        mat_src.convertTo(mat_src, CV_32F, 1.0 / 255);
+        cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        cv::UMat umat_dst(curr.size(), CV_32F, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
-	//5.2 Setup and execute the kernel (i.e. device code)
-	cl::Kernel kernel_add = cl::Kernel(program, "add");
-	kernel_add.setArg(0, buffer_A);
-	kernel_add.setArg(1, buffer_B);
-	kernel_add.setArg(2, buffer_C);
+        std::ifstream ifs(kernelFile);
+        if (ifs.fail())
+            return -1;
+        std::string kernelSource((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+        cv::ocl::ProgramSource programSource(kernelSource);
 
-	cl::Event prof_event;
-	queue.enqueueNDRangeKernel(kernel_add, cl::NullRange, cl::NDRange(vector_elements), cl::NullRange, NULL, &prof_event);
+        // Compile the kernel code
+        cv::String errmsg;
+        cv::String buildopt = cv::format("-D dstT=%s", cv::ocl::typeToStr(umat_dst.depth())); // "-D dstT=float"
+        cv::ocl::Program program = context.getProg(programSource, buildopt, errmsg);
 
-	//5.3 Copy the result from device to host
-	queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, vector_size, &C[0]);
+        cv::ocl::Image2D image(umat_src);
+        float shift_x = -100.5;
+        float shift_y = -50.0;
+        cv::ocl::Kernel kernel("shift", program);
+        kernel.args(image, shift_x, shift_y, cv::ocl::KernelArg::ReadWrite(umat_dst));
 
-	std::cout << "Kernel execution time[ns]:" << prof_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+        size_t globalThreads[3] = {(size_t)mat_src.cols, (size_t)mat_src.rows, 1};
+        //size_t localThreads[3] = { 16, 16, 1 };
+        bool success = kernel.run(3, cl::NullRange, NULL, true);
+
+        if (!success)
+        {
+            std::cout << "Failed running the kernel..." << std::endl;
+            return -1;
+        }
+
+        // Download the dst data from the device (?)
+        cv::Mat mat_dst = umat_dst.getMat(cv::ACCESS_READ);
+
+        cv::imshow("src", mat_src);
+        cv::imshow("dst", mat_dst);
+        cv::waitKey();
     }
     catch (cl::Error err)
     {
-	std::cerr << "ERROR: " << err.what() << ", " << clUtil.GetErrorString(err.err()) << std::endl;
+        std::cerr << "ERROR: " << err.what() << ", " << clUtil.GetErrorString(err.err()) << std::endl;
     }
 
     return 0;
