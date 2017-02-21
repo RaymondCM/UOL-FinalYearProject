@@ -5,6 +5,7 @@
 #endif
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 //Utility Class for OpenCL Platforms and Devices based on Utils.h provided by http://staff.lincoln.ac.uk/gcielniak
@@ -121,16 +122,16 @@ class CLContext
 
     void AddSources(cl::Program::Sources &sources, const std::string &filePath)
     {
-	std::ifstream file(filePath);
+	std::ifstream kFile(filePath);
 
-	if (!file.good())
+	if (!kFile.good())
 	{
 	    std::runtime_error e(("Kernel File (" + filePath + ") does not exist/you do not have access.").c_str());
 	    std::cerr << e.what() << std::endl;
 	    throw e;
 	}
 
-	std::string *kernel = new std::string(std::istreambuf_iterator<char>(file), (std::istreambuf_iterator<char>()));
+	std::string *kernel = new std::string(std::istreambuf_iterator<char>(kFile), (std::istreambuf_iterator<char>()));
 	sources.push_back(std::make_pair((*kernel).c_str(), kernel->length() + 1));
     }
 
