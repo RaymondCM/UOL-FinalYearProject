@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
 	//Define BM parameters
 	int width = VC.get(cv::CAP_PROP_FRAME_WIDTH), height = VC.get(cv::CAP_PROP_FRAME_HEIGHT);
-	int blockSize = width / 16, wB = width / blockSize, hB = height / blockSize;
+	unsigned int blockSize = width / 16, wB = width / blockSize, hB = height / blockSize;
 	const int bCount = wB * hB;
 
 	//Tell OpenCV to use OpenCL
@@ -89,15 +89,17 @@ int main(int argc, char **argv)
 
 	try {
 		do {
+			//Start timer
 			t.start();
+
 			curr.copyTo(prev); //TODO: Test skipping frames
 			VC >> curr;
 
+			//Break if invalid frames and no loop
 			if (prev.empty() || curr.empty()) {
 				//Reset pointer to frame if loop
 				if (loop && VC.isOpened()) {
 					VC.set(cv::CAP_PROP_POS_AVI_RATIO, 0);
-					VC >> prev;
 					VC >> curr;
 					continue;
 				}
@@ -105,6 +107,7 @@ int main(int argc, char **argv)
 				break;
 			}
 
+			//Convert frames to grayscale for faster processing. Keep original data for visualisation
 			cv::cvtColor(prev, prevGray, cv::COLOR_BGR2GRAY);
 			cv::cvtColor(curr, currGray, cv::COLOR_BGR2GRAY);
 
@@ -125,11 +128,12 @@ int main(int argc, char **argv)
 			cl::Kernel kernel(program, "motion_estimation");
 			kernel.setArg(0, prevImage);
 			kernel.setArg(1, currImage);
-			kernel.setArg(2, (unsigned int)blockSize);
+			kernel.setArg(2, blockSize);
 			kernel.setArg(3, motionVectors);
 
+			//Queue kernel with global range spanning all blocks
 			cl::NDRange global((size_t)wB, (size_t)hB, 1);
-			queue.enqueueNDRangeKernel(kernel, 0, global);
+			queue.enqueueNDRangeKernel(kernel, 0, global, cl::NullRange);
 
 			//Read motion vector buffer from device
 			cl_int2 * mVecBuffer = new cl_int2[bCount];
@@ -140,6 +144,7 @@ int main(int argc, char **argv)
 			{
 				for (size_t j = 0; j < hB; j++)
 				{
+					//Calculate repective position of motion vector
 					int id = i + j * wB;
 
 					//Offset drawn point to represent middle rather than top left of block
@@ -152,9 +157,11 @@ int main(int argc, char **argv)
 				}
 			}
 
-			t.end();
-
+			//Display visualisation of motion vectors
 			cv::imshow(dataPath, curr);
+
+			//End timer
+			t.end();
 		} while ((char)cv::waitKey(1) != 27); //Do while !Esc
 	}
 	catch (cl::Error err) {
