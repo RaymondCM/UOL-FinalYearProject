@@ -1,20 +1,20 @@
-__kernel void shift(
-    read_only image2d_t src,
-    float shift_x,
-    float shift_y,
-    __global uchar *dst,
-    int dst_step, int dst_offset, int dst_rows, int dst_cols)
+#define width 800
+#define height 600 
+
+__kernel void shift(__read_only image2d_t src, uint blockSize, __read_write  image2d_t dst)
 {
-    int x = get_global_id(0);
-    int y = get_global_id(1);
+    int x = get_global_id(0) * blockSize;
+    int y = get_global_id(1) * blockSize;
 
-    if (x >= dst_cols)
-        return;
-    int dst_index = mad24(y, dst_step, mad24(x, (int)sizeof(dstT), dst_offset));
-    __global dstT *dstf = (__global dstT *)(dst + dst_index);
-    float2 coord = (float2)((float)x + 0.5f + shift_x, (float)y + 0.5f + shift_y);
+	if(x < width && y < height) {
+		//write_imageui(dst, (int2)(x, y), (uint4)x);
+		printf("(X: %i, Y: %i)\n", x, y);
+	}
+	else {
+		printf("Outside of bounds (X: %i, Y: %i)\n", x, y);
+	}
 
-    dstf[0] = (dstT)read_imagef(src, CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR, coord).x;
+    //printf("global id = %d, local id = %d\n", x, get_local_id(0)); //do it for each work item
 }
 
 __kernel void add(__global const int *A, __global const int *B, __global int *C)
