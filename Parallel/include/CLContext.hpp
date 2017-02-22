@@ -135,6 +135,14 @@ class CLContext
 	sources.push_back(std::make_pair((*kernel).c_str(), kernel->length() + 1));
     }
 
+	static cl::size_t<3> cl_size_t(size_t a, size_t b, size_t c) {
+		cl::size_t<3> data_;
+		data_[0] = a;
+		data_[1] = b;
+		data_[2] = c;
+		return data_;
+	}
+
     const char *GetErrorString(cl_int error)
     {
 	switch (error)
