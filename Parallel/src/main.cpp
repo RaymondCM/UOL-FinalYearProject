@@ -78,14 +78,16 @@ int main(int argc, char **argv)
 	//Tell OpenCV to use OpenCL
 	cv::ocl::setUseOpenCL(true);
 
-	//Create output Window
-	//cv::namedWindow(dataPath, cv::WINDOW_AUTOSIZE);
+	//Create output Window and use dataPath as unique winname
+	cv::namedWindow(dataPath, cv::WINDOW_AUTOSIZE);
 
 	//Should the image file loop?
 	bool loop = true;
 
-	//Create Timer to time each frame loop
+	//Create Timer to time each frame loop and variables for framerate
 	Timer t;
+	long long int totalNS = 0;
+	unsigned int fCount = 0, updateFreq = 30;
 
 	try {
 		do {
@@ -160,8 +162,18 @@ int main(int argc, char **argv)
 			//Display visualisation of motion vectors
 			cv::imshow(dataPath, curr);
 
+			//Display framerate every 30 frames
+			if (fCount >= updateFreq) {
+				cv::setWindowTitle(dataPath, "Framerate: " + std::to_string(fCount / (totalNS / 1000000000.0)) +
+					", Average time between frames [ns]: " + std::to_string(totalNS / fCount));
+				totalNS = 0;
+				fCount = 0;
+			}
+
+			fCount++;
+
 			//End timer
-			t.end();
+			totalNS += t.end();
 		} while ((char)cv::waitKey(1) != 27); //Do while !Esc
 	}
 	catch (cl::Error err) {
@@ -169,5 +181,6 @@ int main(int argc, char **argv)
 		throw err;
 	}
 
+	cv::destroyAllWindows();
 	return 0;
 }
