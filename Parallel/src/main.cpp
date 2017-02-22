@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 	//Create Timer to time each frame loop and variables for framerate
 	Timer t;
 	long long int totalNS = 0;
-	unsigned int fCount = 0, updateFreq = 30;
+	unsigned int fCount = 0, updateFreq = 30, currentFrame = 1;
 
 	try {
 		do {
@@ -103,6 +103,7 @@ int main(int argc, char **argv)
 				if (loop && VC.isOpened()) {
 					VC.set(cv::CAP_PROP_POS_AVI_RATIO, 0);
 					VC >> curr;
+					currentFrame = 1;
 					continue;
 				}
 
@@ -159,6 +160,9 @@ int main(int argc, char **argv)
 				}
 			}
 
+			//Display current frame on visualisation
+			cv::putText(curr, "Frame " + std::to_string(currentFrame), cv::Point(1, height - 1), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.5, cv::Scalar(255, 255, 255));
+
 			//Display visualisation of motion vectors
 			cv::imshow(dataPath, curr);
 
@@ -170,11 +174,13 @@ int main(int argc, char **argv)
 				fCount = 0;
 			}
 
+			//Increment frame counters
 			fCount++;
+			currentFrame++;
 
 			//End timer
 			totalNS += t.end();
-		} while ((char)cv::waitKey(1) != 27); //Do while !Esc
+		} while ((char)cv::waitKey() != 27); //Do while !Esc
 	}
 	catch (cl::Error err) {
 		std::cerr << "ERROR: " << err.what() << ", " << clUtil.GetErrorString(err.err()) << std::endl;
