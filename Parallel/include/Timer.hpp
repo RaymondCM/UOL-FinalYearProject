@@ -9,11 +9,14 @@ public:
 
 	long long int end() {
 		endTime = std::chrono::high_resolution_clock::now();
-		long long int elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
-		std::cout << "Elapsed Time: " << elapsed << " [ns]" << std::endl;
+		elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
 		return elapsed;
 	};
 
+	void print() {
+		std::cout << "Elapsed Time [ns]: " << elapsed << std::endl;
+	};
 private:
 	std::chrono::steady_clock::time_point startTime, endTime;
+	long long int elapsed;
 };
