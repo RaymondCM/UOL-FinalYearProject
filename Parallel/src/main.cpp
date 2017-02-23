@@ -155,18 +155,18 @@ int main(int argc, char **argv)
 					cv::Point pos(i * blockSize, j * blockSize);
 					cv::Point mVec(mVecBuffer[id].x, mVecBuffer[id].y);
 
-					//cv::rectangle(curr, pos, pos + (offset * 2), cv::Scalar(255));
-					cv::arrowedLine(curr, pos + offset, mVec + offset, cv::Scalar(255));
+					cv::rectangle(prev, pos, pos + (offset * 2), cv::Scalar(255, 0, 0, 50));
+					cv::arrowedLine(prev, pos + offset, mVec + offset, cv::Scalar(255));
 				}
 			}
 
 			//Display current frame on visualisation
-			cv::putText(curr, "Frame " + std::to_string(currentFrame), cv::Point(1, height - 1), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(prev, "Frame " + std::to_string(currentFrame), cv::Point(1, height - 1), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.5, cv::Scalar(255, 255, 255));
 
 			//Display visualisation of motion vectors
-			cv::imshow(dataPath, curr);
+			cv::imshow(dataPath, prev);
 
-			//Display framerate every 30 frames
+			//Display framerate every updateFreq frames
 			if (fCount >= updateFreq) {
 				cv::setWindowTitle(dataPath, "Framerate: " + std::to_string(fCount / (totalNS / 1000000000.0)) +
 					", Average time between frames [ns]: " + std::to_string(totalNS / fCount));
