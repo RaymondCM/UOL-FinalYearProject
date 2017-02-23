@@ -89,6 +89,10 @@ int main(int argc, char **argv)
 	long long int totalNS = 0;
 	unsigned int fCount = 0, updateFreq = 30, currentFrame = 1;
 
+	//Timeout to wait for key press (< 1 Waits indef)
+	int cvWaitTime = 1;
+	char key;
+
 	try {
 		do {
 			//Start timer
@@ -155,8 +159,12 @@ int main(int argc, char **argv)
 					cv::Point pos(i * blockSize, j * blockSize);
 					cv::Point mVec(mVecBuffer[id].x, mVecBuffer[id].y);
 
-					cv::rectangle(prev, pos, pos + (offset * 2), cv::Scalar(255, 0, 0, 50));
-					cv::arrowedLine(prev, pos + offset, mVec + offset, cv::Scalar(255));
+					/*cv::rectangle(prev, pos, pos + (offset * 2), cv::Scalar(255, 0, 0, 50));
+					cv::arrowedLine(prev, pos + offset, mVec + offset, cv::Scalar(255));*/
+					if (pos != mVec) {
+						cv::rectangle(prev, pos, pos + cv::Point(blockSize, blockSize), cv::Scalar(255, 0, 0, 50));
+						cv::arrowedLine(prev, pos + offset, mVec + offset, cv::Scalar(255));
+					}
 				}
 			}
 
@@ -180,7 +188,16 @@ int main(int argc, char **argv)
 
 			//End timer
 			totalNS += t.end();
-		} while ((char)cv::waitKey(1) != 27); //Do while !Esc
+
+			key = (char)cv::waitKey(cvWaitTime);
+
+			switch (key) {
+				case 'p':
+					cvWaitTime = cvWaitTime == 0 ? 1 : 0;
+				default:
+					break;
+			}
+		} while (key != 27); //Do while !Esc
 	}
 	catch (cl::Error err) {
 		std::cerr << "ERROR: " << err.what() << ", " << clUtil.GetErrorString(err.err()) << std::endl;
