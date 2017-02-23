@@ -23,15 +23,20 @@ __kernel void motion_estimation(
 		int mvPos = x + y * blockCount;
 		//printf("(X: %i, Y: %i, MV: %i)\n", pos.x, pos.y, mvPos);
 		
-		int lowestSAD = INT_MAX;
-
+		int referenceBlock = read_imageui(prev, sampler, pos).x;
+		//int lowestSAD = INT_MAX;
 		int baseSAD = 0;
+		
 		for (int i = 0; i < blockSize; i++) {
 			for (int j = 0; j < blockSize; j++) {
 				int2 ij = {pos.x + i, pos.y + j};
-				baseSAD += (int)(read_imageui(prev, sampler, ij).x - read_imageui(curr, sampler, ij).x);
+				baseSAD += abs_diff(referenceBlock, (int)read_imageui(curr, sampler, (int2)(pos.x + i, pos.y + j)).x);
 			}
 		}
+		
+		int lowestSAD = baseSAD;
+		motionVectors[mvPos] = pos;
+		
 
 		//Calculate SAD
 		int searchMacro = blockSize / 2;
@@ -44,20 +49,15 @@ __kernel void motion_estimation(
 				int SAD = 0;
 				for (int i = 0; i < blockSize; i++) {
 					for (int j = 0; j < blockSize; j++) {
-						int2 ij = {sPos.x + i, sPos.y + j};
-						SAD += (int)(read_imageui(prev, sampler, ij).x - read_imageui(curr, sampler, ij).x);
+						SAD += abs_diff(referenceBlock, (int)read_imageui(curr, sampler, (int2)(sPos.x + i, sPos.y + j)).x);
 					}
 				}
 				
-				if(SAD < lowestSAD) {
+				if(SAD < lowestSAD && SAD > 1000) {
 					lowestSAD = SAD;
 					motionVectors[mvPos] = sPos;
 				}
 			}
-		}
-
-		if(baseSAD <= lowestSAD) {
-			motionVectors[mvPos] = pos;
 		}
 
 		//printf("SAD: %i", sum);
