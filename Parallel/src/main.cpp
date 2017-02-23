@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
 	//Define BM parameters
 	int width = VC.get(cv::CAP_PROP_FRAME_WIDTH), height = VC.get(cv::CAP_PROP_FRAME_HEIGHT);
-	unsigned int blockSize = width / 16, wB = width / blockSize, hB = height / blockSize;
+	unsigned int blockSize = 40, wB = width / blockSize, hB = height / blockSize;
 	const int bCount = wB * hB;
 
 	//Tell OpenCV to use OpenCL
@@ -155,7 +155,7 @@ int main(int argc, char **argv)
 					cv::Point pos(i * blockSize, j * blockSize);
 					cv::Point mVec(mVecBuffer[id].x, mVecBuffer[id].y);
 
-					cv::rectangle(curr, pos, pos + (offset * 2), cv::Scalar(255));
+					//cv::rectangle(curr, pos, pos + (offset * 2), cv::Scalar(255));
 					cv::arrowedLine(curr, pos + offset, mVec + offset, cv::Scalar(255));
 				}
 			}
@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 
 			//End timer
 			totalNS += t.end();
-		} while ((char)cv::waitKey() != 27); //Do while !Esc
+		} while ((char)cv::waitKey(1) != 27); //Do while !Esc
 	}
 	catch (cl::Error err) {
 		std::cerr << "ERROR: " << err.what() << ", " << clUtil.GetErrorString(err.err()) << std::endl;
