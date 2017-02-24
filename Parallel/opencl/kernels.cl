@@ -15,37 +15,41 @@ __kernel void motion_estimation(
 	const int blockCount = get_global_size(0);
 
 	if(pos.x < width && pos.y < height) {
-		int mvPos = x + y * blockCount;
+		int mvPos = x + y * blockCount, i, j;
 		motionVectors[mvPos] = pos;
 
-		//Use reference block at location x:x y:y
-		int lowestSAD = 0;
-		for (int i = 0; i < blockSize; i++) {
-			for (int j = 0; j < blockSize; j++) {
-				int2 refPos = { pos.x + i, pos.y + y };
-				lowestSAD += abs_diff((int)read_imageui(prev, sampler, refPos).x, (int)read_imageui(curr, sampler, refPos).x);
+		//Boost performance with proof => ABS(SUMA - SUMB|SUMB - SUMA) = SAD
+		int SUMA = 0, SUMB = 0;
+
+		for (i = 0; i < blockSize; i++) {
+			for (j = 0; j < blockSize; j++) {
+				int2 refPos = { pos.x + i, pos.y + j };
+				SUMA += read_imageui(prev, sampler, refPos).x;
+				SUMB += read_imageui(curr, sampler, refPos).x;
 			}
 		}
 
-		//Calculate SAD -VERTICAL SCAN
-		int searchMacro = blockSize / 2;
-		for (int row = -searchMacro; row <= searchMacro; row++)
-		{
-			for (int col = -searchMacro; col <= searchMacro; col++)
-			{
-				int SAD = 0;
+		//Calculate SAD -VERTICAL SCAN SAD = abs(SUMA - SUMB)
+		int searchMacro = blockSize / 2, row, col, lowestSAD = abs(SUMA - SUMB), SAD = 0;
 
-				for (int i = 0; i < blockSize; i++) {
-					for (int j = 0; j < blockSize; j++) {
-						int2 refPos = { pos.x + i, pos.y + y };
-						int2 searchPos = { refPos.x + row, refPos.y + col };
-						SAD += abs_diff((int)read_imageui(prev, sampler, refPos).x, (int)read_imageui(curr, sampler, searchPos).x);
+		for (row = -searchMacro; row <= searchMacro; row++)
+		{
+			for (col = -searchMacro; col <= searchMacro; col++)
+			{
+				int2 searchPos = { pos.x + row, pos.y + col };
+				SUMB = 0;
+
+				for (i = 0; i < blockSize; i++) {
+					for (j = 0; j < blockSize; j++) {
+						SUMB += read_imageui(curr, sampler, searchPos + (int2)(i, j)).x;
 					}
 				}
-				
+
+				SAD = abs(SUMA - SUMB);
+
 				if(SAD < lowestSAD) {
 					lowestSAD = SAD;
-					motionVectors[mvPos] = (int2)(pos.x+row, pos.y+col);
+					motionVectors[mvPos] = searchPos;
 				}
 			}
 		}
