@@ -29,7 +29,7 @@ __kernel void motion_estimation(
 		}
 
 		//Calculate SAD -VERTICAL SCAN SAD = abs(SUMA - SUMB)
-		int searchMacro = blockSize / 2, row, col, lowestSAD = INT_MAX, SAD = 0;
+		int searchMacro = blockSize, row, col, lowestSAD = INT_MAX, SAD = 0;
 
 		if (abs(SUMA - SUMB) == 0) {
 			motionVectors[mvPos] = pos;
