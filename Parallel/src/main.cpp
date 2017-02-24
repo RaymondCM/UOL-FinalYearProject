@@ -72,8 +72,8 @@ int main(int argc, char **argv)
 
 	//Define BM parameters
 	int width = VC.get(cv::CAP_PROP_FRAME_WIDTH), height = VC.get(cv::CAP_PROP_FRAME_HEIGHT);
-	unsigned int blockSize = 24, wB = width / blockSize, hB = height / blockSize;
-	const int bCount = wB * hB;
+	unsigned int blockSize = 24, blockStep = 2, wB = width / blockSize, hB = height / blockSize;
+	int bCount = wB * hB;
 
 	//Tell OpenCV to use OpenCL
 	cv::ocl::setUseOpenCL(true);
@@ -169,7 +169,8 @@ int main(int argc, char **argv)
 			}
 
 			//Display current frame on visualisation
-			cv::putText(prev, "Frame " + std::to_string(currentFrame), cv::Point(1, height - 1), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(prev, "Frame " + std::to_string(currentFrame) + ", Block Size: " + std::to_string(blockSize), 
+				cv::Point(1, height - 1), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.5, cv::Scalar(255, 255, 255));
 
 			//Display visualisation of motion vectors
 			cv::imshow(dataPath, prev);
@@ -199,6 +200,19 @@ int main(int argc, char **argv)
 			switch (key) {
 				case 'p':
 					cvWaitTime = cvWaitTime == 0 ? 1 : 0;
+					break;
+				case '+':
+					blockSize += blockSize < width / 2 ? blockStep : 0;
+					wB = width / blockSize;
+					hB = height / blockSize;
+					bCount = wB * hB;
+					break;
+				case '-':
+					blockSize -= blockSize > blockStep ? blockStep : 0;
+					wB = width / blockSize;
+					hB = height / blockSize;
+					bCount = wB * hB;
+					break;
 				default:
 					break;
 			}
