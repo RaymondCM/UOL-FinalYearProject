@@ -72,14 +72,14 @@ int main(int argc, char **argv)
 
 	//Define BM parameters
 	int width = VC.get(cv::CAP_PROP_FRAME_WIDTH), height = VC.get(cv::CAP_PROP_FRAME_HEIGHT);
-	unsigned int blockSize = 40, wB = width / blockSize, hB = height / blockSize;
+	unsigned int blockSize = 24, wB = width / blockSize, hB = height / blockSize;
 	const int bCount = wB * hB;
 
 	//Tell OpenCV to use OpenCL
 	cv::ocl::setUseOpenCL(true);
 
 	//Create output Window and use dataPath as unique winname
-	cv::namedWindow(dataPath, cv::WINDOW_AUTOSIZE);
+	cv::namedWindow(dataPath, cv::WINDOW_FULLSCREEN);
 
 	//Should the image file loop?
 	bool loop = true;
@@ -162,8 +162,8 @@ int main(int argc, char **argv)
 					/*cv::rectangle(prev, pos, pos + (offset * 2), cv::Scalar(255, 0, 0, 50));
 					cv::arrowedLine(prev, pos + offset, mVec + offset, cv::Scalar(255));*/
 					if (pos != mVec) {
-						cv::rectangle(prev, pos, pos + cv::Point(blockSize, blockSize), cv::Scalar(255, 0, 0, 50));
-						cv::arrowedLine(prev, pos + offset, mVec + offset, cv::Scalar(255));
+						cv::rectangle(prev, pos, pos + cv::Point(blockSize, blockSize), cv::Scalar(255));
+						cv::arrowedLine(prev, pos + offset, mVec + offset, cv::Scalar(0, 255, 255));
 					}
 				}
 			}
@@ -185,6 +185,11 @@ int main(int argc, char **argv)
 			//Increment frame counters
 			fCount++;
 			currentFrame++;
+
+			//Free pointer block
+			free(mVecBuffer);
+			//*prevBuffer = 0;
+			//*currBuffer = 0;
 
 			//End timer
 			totalNS += t.end();
