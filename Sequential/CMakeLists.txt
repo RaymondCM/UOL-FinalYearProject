@@ -8,6 +8,7 @@ add_executable(SequentialBlockMatching "src/main.cpp" "src/BlockMatching.cpp")
 
 #Include target specific include directories
 target_include_directories(SequentialBlockMatching PUBLIC include)
+target_include_directories(SequentialBlockMatching PUBLIC ${SHARED_LIBS})
 
 #Link library files
 target_link_libraries(SequentialBlockMatching ${DCMTK_LIBRARIES} )

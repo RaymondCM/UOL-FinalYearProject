@@ -13,6 +13,7 @@ add_executable(ParallelBlockMatching "src/main.cpp")
 
 #Include target specific include directories
 target_include_directories(ParallelBlockMatching PUBLIC include)
+target_include_directories(ParallelBlockMatching PUBLIC ${SHARED_LIBS})
 target_include_directories(ParallelBlockMatching PUBLIC ${OpenCL_INCLUDE_DIR})
 
 #Link library files
