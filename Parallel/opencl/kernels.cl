@@ -18,15 +18,36 @@ float sum_absolute_diff(image2d_t curr, image2d_t ref, int2 currPoint, int2 refP
 	return sum;
 }
 
-inline float mean_absolute_diff(image2d_t curr, image2d_t ref, int2 currPoint, int2 refPoint, int bSize) {
-	return sum_absolute_diff(curr, ref, currPoint, refPoint, bSize) / (bSize * bSize);
+inline int square(int x) {
+	return x * x;
 }
 
 inline float euclidean_distance(int x2, int x1, int y2, int y1) {
-	float yDiff = y2 - y1;
-	float xDiff = x2 - x1;
-	return sqrt((xDiff * xDiff) + (yDiff * yDiff));
+	return sqrt((float)(square(x2 - x1) + square(y2 - y1)));
 }
+
+inline float mean_absolute_diff(image2d_t curr, image2d_t ref, int2 currPoint, int2 refPoint, int bSize) {
+	return sum_absolute_diff(curr, ref, currPoint, refPoint, bSize) / square(bSize);
+}
+
+inline float sum_squared_diff(image2d_t curr, image2d_t ref, int2 currPoint, int2 refPoint, int bSize) {
+	float sum = 0;
+
+	for (int i = 0; i < bSize; i++)
+	{
+		for (int j = 0; j < bSize; j++)
+		{
+			int2 cP = { currPoint.x + i, currPoint.y + j };
+			int2 rP = { refPoint.x + i, refPoint.y + j };
+
+			//abs_diff is not necessary
+			sum += square(abs_diff(read_imageui(curr, sampler, cP).x, read_imageui(ref, sampler, rP).x));
+		}
+	}
+
+	return sum;
+}
+
 
 inline bool is_in_bounds(int x, int y, int width, int height, int bSize) {
 	return y >= 0 && y < height - bSize && x >= 0 && x < width - bSize;
@@ -60,7 +81,7 @@ __kernel void full_exhastive(
 
 			//Check if the block is within the bounds to avoid incorrect values
 			if (is_in_bounds(refPoint.x, refPoint.y, width, height, blockSize)) {
-				err = sum_absolute_diff(curr, prev, currPoint, refPoint, blockSize);
+				err = sum_squared_diff(curr, prev, currPoint, refPoint, blockSize);
 
 				//Weight results to preffer closer macroblocks
 				float newDistance = euclidean_distance(refPoint.x, currPoint.x, refPoint.y, currPoint.y);

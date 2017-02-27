@@ -6,10 +6,12 @@
 
 #include "Timer.hpp"
 
+inline float square(float x) {
+	return x * x;
+}
+
 inline float euclideanDistance(int x2, int x1, int y2, int y1) {
-	float yDiff = y2 - y1;
-	float xDiff = x2 - x1;
-	return sqrt((xDiff * xDiff) + (yDiff * yDiff));
+	return sqrt((float)(square(x2 - x1) + square(y2 - y1)));
 }
 
 int main(int argc, char **argv)
@@ -97,8 +99,9 @@ int main(int argc, char **argv)
 
 						//Check if it lays within the bounds of the capture
 						if (refPoint.y >= 0 && refPoint.y < height - blockSize && refPoint.x >= 0 && refPoint.x < width - blockSize) {
-							//Calculate MAD (mean absolute difference)
-							err = cv::sum(cv::abs(currGray(middle) - prevGray(cv::Rect(refPoint.x, refPoint.y, blockSize, blockSize))))[0] / (blockSize * blockSize);
+							//Calculate SSD (Sum of square differences)
+							cv::Mat diff = cv::abs(currGray(middle) - prevGray(cv::Rect(refPoint.x, refPoint.y, blockSize, blockSize)));
+							err = cv::sum(diff.mul(diff))[0];
 
 							//Take the lowest error, closeness is preffered.
 							float newDistance = euclideanDistance(refPoint.x, currPoint.x, refPoint.y, currPoint.y);
@@ -122,7 +125,7 @@ int main(int argc, char **argv)
 		//End timer so FPS isn't inclusive of drawing onto the screen
 		totalNS += t.end();
 
-		cv::Mat display = prev.clone();
+		cv::Mat display = curr.clone();
 
 		//Draw Motion Vectors
 		for (size_t i = 0; i < wB; i++)
