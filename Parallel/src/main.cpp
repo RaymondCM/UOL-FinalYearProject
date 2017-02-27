@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	#endif
 
     std::string kernelFile = targetRoot + "/opencl/kernels.cl";
-    std::string dataPath = projectRoot + "/data/input.avi";
+	std::string dataPath = projectRoot + "/data/input.avi";
 	
 	//Get Context
     CLContext clUtil(argc, argv);
@@ -72,14 +72,14 @@ int main(int argc, char **argv)
 
 	//Define BM parameters
 	int width = VC.get(cv::CAP_PROP_FRAME_WIDTH), height = VC.get(cv::CAP_PROP_FRAME_HEIGHT);
-	unsigned int blockSize = 24, blockStep = 2, wB = width / blockSize, hB = height / blockSize;
+	unsigned int blockSize = 20, blockStep = 2, wB = width / blockSize, hB = height / blockSize;
 	int bCount = wB * hB;
 
 	//Tell OpenCV to use OpenCL
 	cv::ocl::setUseOpenCL(true);
 
 	//Create output Window and use dataPath as unique winname
-	cv::namedWindow(dataPath, cv::WINDOW_FULLSCREEN);
+	cv::namedWindow(dataPath, cv::WINDOW_FREERATIO);
 
 	//Should the image file loop?
 	bool loop = true;
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 	unsigned int fCount = 0, updateFreq = 30, currentFrame = 1;
 
 	//Timeout to wait for key press (< 1 Waits indef)
-	int cvWaitTime = 1;
+	int cvWaitTime = 0;
 	char key;
 
 	try {
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 			//Start timer
 			t.start();
 
-			curr.copyTo(prev); //TODO: Test skipping frames
+			prev = curr.clone(); //TODO: Test skipping frames
 			VC >> curr;
 
 			//Break if invalid frames and no loop
@@ -132,19 +132,29 @@ int main(int argc, char **argv)
 			cl::Buffer motionVectors(context, CL_MEM_WRITE_ONLY, sizeof(cl_int2) * bCount);
 
 			//Create motion_estimation kernel and set arguments 
-			cl::Kernel kernel(program, "motion_estimation");
+			cl::Kernel kernel(program, "full_exhastive");
 			kernel.setArg(0, prevImage);
 			kernel.setArg(1, currImage);
 			kernel.setArg(2, blockSize);
-			kernel.setArg(3, motionVectors);
+			kernel.setArg(3, width);
+			kernel.setArg(4, height);
+			kernel.setArg(5, motionVectors);
 
 			//Queue kernel with global range spanning all blocks
 			cl::NDRange global((size_t)wB, (size_t)hB, 1);
 			queue.enqueueNDRangeKernel(kernel, 0, global, cl::NullRange);
+			
+			//queue.finish();
 
 			//Read motion vector buffer from device
 			cl_int2 * mVecBuffer = new cl_int2[bCount];
 			queue.enqueueReadBuffer(motionVectors, 0, 0, sizeof(cl_int2) * bCount, mVecBuffer);
+
+			//End timer so FPS isn't inclusive of drawing onto the screen
+			totalNS += t.end();
+
+			//Create seperate file for drawing to the screen
+			cv::Mat display = prev.clone();
 
 			//Draw Motion Vectors from mVecBuffer
 			for (size_t i = 0; i < wB; i++)
@@ -152,28 +162,27 @@ int main(int argc, char **argv)
 				for (size_t j = 0; j < hB; j++)
 				{
 					//Calculate repective position of motion vector
-					int id = i + j * wB;
+					int idx = i + j * wB;
 
 					//Offset drawn point to represent middle rather than top left of block
 					cv::Point offset(blockSize / 2, blockSize / 2);
 					cv::Point pos(i * blockSize, j * blockSize);
-					cv::Point mVec(mVecBuffer[id].x, mVecBuffer[id].y);
+					cv::Point mVec(mVecBuffer[idx].x, mVecBuffer[idx].y);
 
-					/*cv::rectangle(prev, pos, pos + (offset * 2), cv::Scalar(255, 0, 0, 50));
-					cv::arrowedLine(prev, pos + offset, mVec + offset, cv::Scalar(255));*/
-					if (pos != mVec) {
-						cv::rectangle(prev, pos, pos + cv::Point(blockSize, blockSize), cv::Scalar(255));
-						cv::arrowedLine(prev, pos + offset, mVec + offset, cv::Scalar(0, 255, 255));
-					}
+					cv::rectangle(display, pos, pos + cv::Point(blockSize, blockSize), cv::Scalar(255));
+					cv::arrowedLine(display, pos + offset, mVec + offset, cv::Scalar(0, 255, 255));
 				}
 			}
 
+			//Free pointer block
+			free(mVecBuffer);
+
 			//Display current frame on visualisation
-			cv::putText(prev, "Frame " + std::to_string(currentFrame) + ", Block Size: " + std::to_string(blockSize), 
+			cv::putText(display, "Frame " + std::to_string(currentFrame) + ", Block Size: " + std::to_string(blockSize),
 				cv::Point(1, height - 1), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.5, cv::Scalar(255, 255, 255));
 
 			//Display visualisation of motion vectors
-			cv::imshow(dataPath, prev);
+			cv::imshow(dataPath, display);
 
 			//Display framerate every updateFreq frames
 			if (fCount >= updateFreq) {
@@ -186,14 +195,6 @@ int main(int argc, char **argv)
 			//Increment frame counters
 			fCount++;
 			currentFrame++;
-
-			//Free pointer block
-			free(mVecBuffer);
-			//*prevBuffer = 0;
-			//*currBuffer = 0;
-
-			//End timer
-			totalNS += t.end();
 
 			key = (char)cv::waitKey(cvWaitTime);
 
