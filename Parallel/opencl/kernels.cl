@@ -1,13 +1,90 @@
-#define width 800
-#define height 600
-
 //Create sampler for image2d_t that doesnt interpolate points, and sets out of bound pixels to 0
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 
-__kernel void motion_estimation(
+float sum_absolute_diff(image2d_t curr, image2d_t ref, int2 currPoint, int2 refPoint, int bSize) {
+	float sum = 0;
+
+	for (int i = 0; i < bSize; i++)
+	{
+		for (int j = 0; j < bSize; j++)
+		{
+			int2 cP = { currPoint.x + i, currPoint.y + j };
+			int2 rP = { refPoint.x + i, refPoint.y + j };
+
+			sum += abs_diff(read_imageui(curr, sampler, cP).x, read_imageui(ref, sampler, rP).x);
+		}
+	}
+
+	return sum;
+}
+
+inline float mean_absolute_diff(image2d_t curr, image2d_t ref, int2 currPoint, int2 refPoint, int bSize) {
+	return sum_absolute_diff(curr, ref, currPoint, refPoint, bSize) / (bSize * bSize);
+}
+
+inline float euclidean_distance(int x2, int x1, int y2, int y1) {
+	float yDiff = y2 - y1;
+	float xDiff = x2 - x1;
+	return sqrt((xDiff * xDiff) + (yDiff * yDiff));
+}
+
+inline bool is_in_bounds(int x, int y, int width, int height, int bSize) {
+	return y >= 0 && y < height - bSize && x >= 0 && x < width - bSize;
+}
+
+__kernel void full_exhastive(
+	__read_only image2d_t prev,
+	__read_only image2d_t curr,
+	const uint blockSize,
+	uint width,
+	uint height,
+	__global int2 * motionVectors
+)
+{
+	//Get position within work group and reference block in current frame
+	const int x = get_global_id(0), y = get_global_id(1);
+	const int2 currPoint = { x * blockSize, y * blockSize };
+
+	//Get number of blocks spanning the x-axis for buffer indexing
+	const int wB = get_global_size(0);
+	int idx = x + y * wB;
+
+	const int sWindow = blockSize;
+	float distanceToBlock = FLT_MAX;
+	float bestErr = FLT_MAX, err;
+
+	//Loop over all possible blocks within each macroblock
+	for (int row = -sWindow; row < sWindow; row++) {
+		for (int col = -sWindow; col < sWindow; col++) {
+			int2 refPoint = { currPoint.x + row, currPoint.y + col };
+
+			//Check if the block is within the bounds to avoid incorrect values
+			if (is_in_bounds(refPoint.x, refPoint.y, width, height, blockSize)) {
+				err = sum_absolute_diff(curr, prev, currPoint, refPoint, blockSize);
+
+				//Weight results to preffer closer macroblocks
+				float newDistance = euclidean_distance(refPoint.x, currPoint.x, refPoint.y, currPoint.y);
+
+				if (err < bestErr) {
+					bestErr = err;
+					distanceToBlock = newDistance;
+					motionVectors[idx] = refPoint;
+				}
+				else if (err == bestErr && newDistance <= distanceToBlock) {
+					distanceToBlock = newDistance;
+					motionVectors[idx] = refPoint;
+				}
+			}
+		}
+	}
+}
+
+__kernel void motion_estimation_opt(
 	__read_only image2d_t prev,
 	__read_only image2d_t curr,
 	uint blockSize,
+	uint width,
+	uint height,
 	__global int2 * motionVectors
 )
 {
@@ -21,9 +98,9 @@ __kernel void motion_estimation(
 		//Calculate position result motion vector should go in buffer
 		int mvPos = x + y * blockCount;
 
-		/*Optimisation One: 
-			Assume ABS(SUM(A(i:i+blockSize,j:j+blockSize)) - SUM(A(i:i+blockSize,j:j+blockSize))) 
-			Equals element wise Sum of Absolute differences (True in tests).
+		/*Optimisation One:
+		Assume ABS(SUM(A(i:i+blockSize,j:j+blockSize)) - SUM(A(i:i+blockSize,j:j+blockSize)))
+		Equals element wise Sum of Absolute differences (True in tests).
 		Allows for single computation of reference block sum rather that re accessing each element
 		and allows for lower number of computations for current frame block (SUMB)*/
 
@@ -49,15 +126,15 @@ __kernel void motion_estimation(
 		block if two blocks have the same SAD error.*/
 		float distanceToBlock = FLT_MAX;
 
-		/*Pre allocate variables for loops. 
+		/*Pre allocate variables for loops.
 		Initialise lowestSAD to MAX to ensure a value is always written to mVecBuffer*/
 		int row, col, lowestSAD = INT_MAX, SAD = 0;
 
 		/*Optimisation Two: (check with university if novel optimisation of full search)
-			Due to assumtion SUMA - SUMB | SUMB - SUMA = SAD the calculation of SAD through
-			vertical scan can be represented as SUMB0,1 = SUMB0,0 - SUMB0,0(:,0) + SUMB0,0(:,blockSize) 
-			and for changes in y SUMB1,0 = SUMB0,0 - SUMB0,0(0,:) + SUMB0,0(blockSize,:).
-			only requires blockSize * 2 calculations per block rather than (blockSize * blockSize) ^ 2*/
+		Due to assumtion SUMA - SUMB | SUMB - SUMA = SAD the calculation of SAD through
+		vertical scan can be represented as SUMB0,1 = SUMB0,0 - SUMB0,0(:,0) + SUMB0,0(:,blockSize)
+		and for changes in y SUMB1,0 = SUMB0,0 - SUMB0,0(0,:) + SUMB0,0(blockSize,:).
+		only requires blockSize * 2 calculations per block rather than (blockSize * blockSize) ^ 2*/
 
 		//Calculate initial SUMB of top left corner (starting position of below loop)
 		//TODO: Lowest SAD will always = SUMB below so maybe save one loop iteration and start searchWindow loop from -blockSize + 1
@@ -68,8 +145,8 @@ __kernel void motion_estimation(
 		}
 
 		/*Loop over every possible block in search window, save motion vector if point is the lowest SAD
-			due to optimisation two only the edges of each frame need to be recalculated each loop due to
-			all other elements SUMB is comprised off being shared between previous searched block and current*/
+		due to optimisation two only the edges of each frame need to be recalculated each loop due to
+		all other elements SUMB is comprised off being shared between previous searched block and current*/
 		for (row = -searchWindow; row <= searchWindow; row++)
 		{
 			col = -searchWindow;
@@ -86,8 +163,8 @@ __kernel void motion_estimation(
 				SUMB = 0;
 
 				for (i = 0; i <= blockSize; i++) {
-						SUMB -= read_imageui(curr, sampler, (int2)(pos.x + row + i, pos.y + col)).x;
-						SUMB += read_imageui(curr, sampler, (int2)(pos.x + row + i, pos.y + col + blockSize)).x;
+					SUMB -= read_imageui(curr, sampler, (int2)(pos.x + row + i, pos.y + col)).x;
+					SUMB += read_imageui(curr, sampler, (int2)(pos.x + row + i, pos.y + col + blockSize)).x;
 				}
 
 				//TODO: Replace abs(SUMA - SUMB) with SUMA < SUMB ? SUMB - SUMA : SUMA - SUMB
@@ -101,7 +178,8 @@ __kernel void motion_estimation(
 					lowestSAD = SAD;
 					distanceToBlock = newDistance;
 					motionVectors[mvPos] = searchPos;
-				} else if(SAD == lowestSAD && newDistance < distanceToBlock) {
+				}
+				else if (SAD == lowestSAD && newDistance < distanceToBlock) {
 					distanceToBlock = newDistance;
 					motionVectors[mvPos] = searchPos;
 				}
@@ -110,4 +188,3 @@ __kernel void motion_estimation(
 
 	}
 }
-
