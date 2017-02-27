@@ -31,6 +31,10 @@ find_package(OpenCV REQUIRED)
 MESSAGE( STATUS "OpenCV_DIR: " ${OpenCV_DIR})
 MESSAGE( STATUS "OpenCV_LIBS: " ${OpenCV_LIBS})
 
+#Set Variables to shared libraries
+set(SHARED_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/shared/include")
+set(SHARED_SRC "${CMAKE_CURRENT_SOURCE_DIR}/shared/src")
+
 #Add Project Subdirectories
 add_subdirectory(Sequential)
 add_subdirectory(Parallel)
