@@ -81,7 +81,7 @@ __kernel void full_exhastive(
 
 			//Check if the block is within the bounds to avoid incorrect values
 			if (is_in_bounds(refPoint.x, refPoint.y, width, height, blockSize)) {
-				err = sum_squared_diff(curr, prev, currPoint, refPoint, blockSize);
+				err = sum_absolute_diff(curr, prev, currPoint, refPoint, blockSize);
 
 				//Weight results to preffer closer macroblocks
 				float newDistance = euclidean_distance(refPoint.x, currPoint.x, refPoint.y, currPoint.y);
