@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 			totalNS += t.end();
 
 			//Create seperate file for drawing to the screen
-			cv::Mat display = prev.clone();
+			cv::Mat display = curr.clone();
 
 			//Draw Motion Vectors from mVecBuffer
 			for (size_t i = 0; i < wB; i++)
