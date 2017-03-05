@@ -1,10 +1,11 @@
-#include <iostream>
+﻿#include <iostream>
 #include <string>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
 #include "BlockMatching.hpp"
+#include "Dicom.hpp"
 #include "Capture.hpp"
 #include "Timer.hpp"
 #include "Utils.hpp"
@@ -17,17 +18,19 @@ int main(int argc, char **argv)
 	projectRoot = PROJECT_ROOT;
 #endif
 
-	std::string dataPath = projectRoot + "/data/input.avi";
+	std::string dataPath = projectRoot + "/data/IM_0068-Bmode.dcm";
+	std::string dataPathVideo = projectRoot + "/data/input.avi";
 
 	//Open Video Capture to File
-	Capture VC(dataPath);
+	Dicom Capture(dataPath, true);
+	//Capture Capture(dataPathVideo);
 
 	//Allocate Mat for previous and current frame
 	cv::Mat prev, curr, prevGray, currGray;
-	VC >> curr;
+	Capture >> curr;
 
 	//Define BM parameters
-	int width = VC.width(), height = VC.height();
+	int width = Capture.GetWidth(), height = Capture.GetHeight();
 
 	//Get all possible block sizes
 	std::vector<int> bSizes = Util::getBlockSizes(width, height);
@@ -45,7 +48,7 @@ int main(int argc, char **argv)
 	Timer t(30);
 
 	//Timeout to wait for key press (< 1 Waits indef)
-	int cvWaitTime = 0;
+	int cvWaitTime = 1;
 	char key;
 
 	do {
@@ -53,14 +56,14 @@ int main(int argc, char **argv)
 		t.tic();
 
 		prev = curr.clone(); //TODO: Test skipping frames
-		VC >> curr;
+		Capture >> curr;
 
 		//Break if invalid frames and no loop
 		if (prev.empty() || curr.empty()) {
 			//Reset pointer to frame if loop
-			if (loop && VC.isOpened()) {
-				VC.reset();
-				VC >> curr;
+			if (loop) {
+				Capture.SetPos(0);
+				Capture >> curr;
 				continue;
 			}
 
@@ -89,7 +92,7 @@ int main(int argc, char **argv)
 		free(motionVectors);
 
 		//Display program information on frame
-		Util::drawText(display, std::to_string(VC.pos()), std::to_string(blockSize), std::to_string(t.getFPSFromElapsed()));
+		Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(t.getFPSFromElapsed()));
 
 		//Display visualisation of motion vectors
 		cv::imshow(winname, display);
