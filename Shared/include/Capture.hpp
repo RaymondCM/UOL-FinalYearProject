@@ -8,31 +8,33 @@ class Capture {
 public:
 	Capture(std::string device) {
 		this->vc = cv::VideoCapture(device);
-		this->w = vc.get(cv::CAP_PROP_FRAME_WIDTH);
-		this->h = vc.get(cv::CAP_PROP_FRAME_HEIGHT);
+		this->width = vc.get(cv::CAP_PROP_FRAME_WIDTH);
+		this->height = vc.get(cv::CAP_PROP_FRAME_HEIGHT);
 	};
 
 	cv::Mat& operator>> (cv::Mat& in)
 	{
 		this->vc >> in;
-		this->frameIndex++;
+		this->frame_index++;
 		return in;
 	};
 
-	void reset() {
+	void Reset() {
 		this->vc.set(cv::CAP_PROP_POS_AVI_RATIO, 0);
-		this->frameIndex = 0;
+		this->frame_index = 0;
 	};
 
-	bool isOpened() { return this->vc.isOpened(); };
+	bool IsOpened() { return this->vc.isOpened(); };
 
-	int width() { return this->w; };
+	int GetWidth() { return this->width; };
 
-	int height() { return this->h; };
+	int GetHeight() { return this->height; };
 	
-	int pos() { return this->frameIndex; };
+	void SetPos(int index = 0) { this->frame_index = index; };
+	
+	int GetPos() { return this->frame_index; };
 
 private:
 	cv::VideoCapture vc;
-	int w, h, frameIndex = 0;
+	int width, height, frame_index = 0;
 };
