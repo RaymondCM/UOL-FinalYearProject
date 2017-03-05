@@ -19,6 +19,7 @@ public:
 		DJDecoderRegistration::registerCodecs();
 		this->path = filePath;
 		this->compressed = compressed;
+		this->Load();
 	};
 
 	~Dicom() {
@@ -273,6 +274,34 @@ public:
 		this->frame_index = index;
 		return output;
 	};
+
+	int GetWidth() {
+		return this->width;
+	};
+
+	int GetHeight() {
+		return this->height;
+	};
+
+	int GetSamplesPerPixel() {
+		return this->samples_per_pixel;
+	};
+
+	int GetBitsAllocated() {
+		return this->bits_allocated;
+	};
+
+	int GetFrameCount() {
+		return this->frame_count;
+	};
+
+	void SetPos(int index = 0) {
+		this->frame_index = index;
+	}
+
+	int GetPos() {
+		return this->frame_index;
+	}
 private:
 	std::string path;
 	int frame_index = 0;
