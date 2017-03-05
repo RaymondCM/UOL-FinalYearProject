@@ -45,6 +45,17 @@ public:
 		}
 	};
 
+	cv::Mat& operator>> (cv::Mat& in)
+	{
+		this->frame_index++;
+
+		if (this->frame_index >= this->frame_count)
+			this->frame_index = 0;
+
+		in = this->GetFrame(this->frame_index);
+		return in;
+	};
+
 	//TODO: Fully Implement Compressed/Decompressed Files for speed (3x faster)
 	bool LoadDecompressedFile() {
 		this->frames = new DicomImage(this->path.c_str(), EXS_LittleEndianExplicit);
@@ -214,6 +225,7 @@ public:
 			std::cerr << err.what() << std::endl;
 		}
 
+		this->frame_index = index;
 		return output;
 	};
 
@@ -258,6 +270,7 @@ public:
 			std::cerr << err.what() << std::endl;
 		}
 
+		this->frame_index = index;
 		return output;
 	};
 private:
