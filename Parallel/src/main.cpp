@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 	Capture >> curr;
 
 	//Define BM parameters
-	int width = Capture.GetWidth(), height = Capture.GetHeight();
+	int width = Capture.GetWidth(), height = Capture.GetHeight(), frame_count = Capture.GetFrameCount();
 
 	//Get all possible block sizes
 	std::vector<int> bSizes = Util::getBlockSizes(width, height);
@@ -85,21 +85,24 @@ int main(int argc, char **argv)
 	//Create output Window and use Parallel as unique winname
 	std::string winname("Parallel");
 	cv::namedWindow(winname, cv::WINDOW_FREERATIO);
+	cv::setMouseCallback(winname, Util::MouseCallback, NULL);
 
 	//Should the image file loop?
 	bool loop = true;
 
 	//Create Timer to time each frame loop and variables for framerate
-	Timer t(30);
+	//Log Processed Frames per second and rendered
+	Timer pT(30), rT(30);
 
 	//Timeout to wait for key press (< 1 Waits indef)
-	int cvWaitTime = 1;
+	int cvWaitTime = 0;
 	char key;
 
 	try {
 		do {
 			//Start timer
-			t.tic();
+			pT.tic();
+			rT.tic();
 
 			prev = curr.clone(); //TODO: Test skipping frames
 			Capture >> curr;
@@ -153,7 +156,7 @@ int main(int argc, char **argv)
 			queue.enqueueReadBuffer(motionVectors, 0, 0, sizeof(cl_int2) * bCount, mVecBuffer);
 
 			//Clock timer so FPS isn't inclusive of drawing onto the screen
-			t.toc();
+			pT.toc();
 
 			//Create seperate file for drawing to the screen
 			cv::Mat display = curr.clone();
@@ -163,9 +166,12 @@ int main(int argc, char **argv)
 
 			//Free pointer block
 			free(mVecBuffer);
+			
+			//Finish render timer
+			rT.toc();
 
 			//Display program information on frame
-			Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(t.getFPSFromElapsed()));
+			Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
 
 			//Display visualisation of motion vectors
 			cv::imshow(winname, display);

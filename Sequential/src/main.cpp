@@ -45,15 +45,17 @@ int main(int argc, char **argv)
 	bool loop = true;
 
 	//Create Timer to time each frame loop and variables for framerate
-	Timer t(30);
+	//Log Processed Frames per second and rendered
+	Timer pT(30), rT(30);
 
 	//Timeout to wait for key press (< 1 Waits indef)
-	int cvWaitTime = 1;
+	int cvWaitTime = 0;
 	char key;
 
 	do {
 		//Start timer
-		t.tic();
+		pT.tic();
+		rT.tic();
 
 		prev = curr.clone(); //TODO: Test skipping frames
 		Capture >> curr;
@@ -81,7 +83,7 @@ int main(int argc, char **argv)
 		BlockMatching::FullExhastive(currGray, prevGray, motionVectors, blockSize, width, height, wB, hB);
 
 		//Clock timer so FPS isn't inclusive of drawing onto the screen
-		t.toc();
+		pT.toc();
 
 		cv::Mat display = curr.clone();
 
@@ -91,8 +93,11 @@ int main(int argc, char **argv)
 		//Free pointer block
 		free(motionVectors);
 
+		//Finish render timer
+		rT.toc();
+
 		//Display program information on frame
-		Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(t.getFPSFromElapsed()));
+		Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
 
 		//Display visualisation of motion vectors
 		cv::imshow(winname, display);
