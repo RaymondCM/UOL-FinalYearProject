@@ -15,7 +15,8 @@ add_executable(Parallel "src/main.cpp")
 target_include_directories(Parallel PUBLIC include)
 target_include_directories(Parallel PUBLIC ${SHARED_LIBS})
 target_include_directories(Parallel PUBLIC ${OpenCL_INCLUDE_DIR})
-
+target_include_directories(Parallel PUBLIC ${DCMTK_INCLUDE_DIRS})
+        
 #Link library files
 target_link_libraries(Parallel ${DCMTK_LIBRARIES} )
 target_link_libraries(Parallel ${OpenCV_LIBS} )

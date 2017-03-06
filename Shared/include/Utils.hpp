@@ -1,4 +1,4 @@
-#include <string>
+﻿#include <string>
 #include <vector>
 #include <algorithm>
 
@@ -18,14 +18,14 @@ namespace Util {
 					factors.push_back(number / i);
 				}
 			}
-		} 
+		}
 	}
 
 	std::vector<int> getBlockSizes(int w, int h) {
 		std::vector<int> wF, hF, c;
 		getFactors(wF, w);
 		getFactors(hF, h);
-		
+
 		std::sort(wF.begin(), wF.end());
 		std::sort(hF.begin(), hF.end());
 
@@ -55,8 +55,8 @@ namespace Util {
 		}
 	}
 
-	void drawText(cv::Mat& canvas, std::string f, std::string bS, std::string fps, cv::Scalar colour = cv::Scalar(255, 255, 255)) {
-		std::string content("Frame " + f + ", Block Size: " + bS + ", FPS: " + fps);
+	void drawText(cv::Mat& canvas, std::string f, std::string bS, std::string processed_fps, std::string rendered_fps, cv::Scalar colour = cv::Scalar(255, 255, 255)) {
+		std::string content("Frame " + f + ", Block Size: " + bS + ", Processed FPS: " + processed_fps + ", Rendered FPS: " + rendered_fps);
 		cv::putText(canvas, content, cv::Point(0, canvas.size().height - 1), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.6, colour);
 	}
 }
