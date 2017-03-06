@@ -37,23 +37,22 @@ public:
 	};
 
 	//Functions that will eventually allow eassier use of this class
-	cv::Mat GetFrame(int index) {
+	bool GetFrame(cv::Mat& in, int index) {
 		if (this->compressed) {
-			return GetCompressedFrame(index);
+			return GetCompressedFrame(in, index);
 		}
 		else {
-			return GetDecompressedFrame(index);
+			return GetDecompressedFrame(in, index);
 		}
 	};
 
 	cv::Mat& operator>> (cv::Mat& in)
 	{
-		this->frame_index++;
-
 		if (this->frame_index >= this->frame_count)
 			this->frame_index = 0;
 
-		in = this->GetFrame(this->frame_index);
+		this->GetFrame(in, this->frame_index);
+		this->frame_index++;
 		return in;
 	};
 
@@ -80,7 +79,7 @@ public:
 
 			//Ensure file exists and is a valid DICOM file
 			OFCondition file_status = this->file_format.loadFile(this->path.c_str());
-			if (file_status.bad()) 
+			if (file_status.bad())
 				throw std::runtime_error("Path not valid DICOM image \"DICM\" not present at byte 128\n" + std::string(file_status.text()));
 
 			//Get Dataset representation
@@ -131,7 +130,7 @@ public:
 		{
 			//Get dataset
 			DcmDataset * ds = ff.getDataset();
-			
+
 			//Force all of data including all frames into memory
 			ff.loadAllDataIntoMemory();
 
@@ -166,15 +165,12 @@ public:
 		catch (std::exception err) {
 			std::cerr << err.what() << std::endl;
 		}
-		
+
 		return xferUID;
 	};
 
 	//Return uncompressed data from DICOM file without decompressing entire dataset in memory
-	cv::Mat GetCompressedFrame(int index) {
-		//Create empty matic incase any errors are thrown
-		cv::Mat output(this->height, this->width, CV_MAKETYPE(this->bits_allocated, this->samples_per_pixel));
-
+	bool GetCompressedFrame(cv::Mat& in, int index) {
 		//Attempt to handle multple bit allocations
 		try {
 			if (index < 0 || index > this->frame_count - 1)
@@ -186,16 +182,19 @@ public:
 			//Store status for both 8 and 16 bit files
 			//Only support 8|16
 			OFCondition status;
-			cv::Mat result;
+
+			//Create empty matic incase any errors are thrown
+			cv::Mat result(this->height, this->width, CV_MAKETYPE(this->bits_allocated, this->samples_per_pixel));
 
 			if (this->bits_allocated == 8) {
 				//Allocate buffer memory
 				Uint8 * buffer = new Uint8[int(this->frame_bytes)];
 				status = UncompressFrame(buffer, frame_offset);
-				//Create matrix and clone it so that buffer memory doesn't leak
+				//Create matrix and later clone it so that buffer memory doesn't leak
 				//TODO: Don't clone the matrix, only have one reference to the created matrix
 				result = cv::Mat(this->height, this->width, CV_MAKETYPE(this->bits_allocated, this->samples_per_pixel), (long *)buffer);
-				output = result.clone();
+				//Clone result matrix for now until buffer issue is resolved
+				in = result.clone();
 				//Deallocate buffer memory
 				free(buffer);
 			}
@@ -203,7 +202,7 @@ public:
 				Uint16 * buffer = new Uint16[int(this->frame_bytes)];
 				status = UncompressFrame(buffer, frame_offset);
 				result = cv::Mat(this->height, this->width, CV_MAKETYPE(this->bits_allocated, this->samples_per_pixel), (long *)buffer);
-				output = result.clone();
+				in = result.clone();
 				free(buffer);
 			}
 			else {
@@ -213,21 +212,23 @@ public:
 			if (status.bad())
 				throw std::runtime_error("Couldn't uncompress frame from: " + this->path + " for frame " + std::to_string(index));
 
+			this->frame_index = index;
+
 			//Convert RGB to BGR by swapping the channels
 			if (this->samples_per_pixel == 3) {
 				std::vector<cv::Mat> channels_bgr;
-				cv::split(output, channels_bgr);
+				cv::split(in, channels_bgr);
 				std::vector<cv::Mat> channels_rgb = { channels_bgr[2], channels_bgr[1], channels_bgr[0] };
-				cv::merge(channels_rgb, output);
+				cv::merge(channels_rgb, in);
 			}
 		}
 		catch (std::exception err) {
 			//TODO: Stop program execution
 			std::cerr << err.what() << std::endl;
+			return false;
 		}
 
-		this->frame_index = index;
-		return output;
+		return true;
 	};
 
 	template<typename T>
@@ -238,7 +239,6 @@ public:
 			StartFragment(), buffer, this->frame_bytes, this->decompressed_color_model, this->cache);
 	};
 
-
 	//For getting uncompressed frames, resets position to get next frames from
 	//TODO: research better methods
 	Uint32& StartFragment() {
@@ -247,32 +247,33 @@ public:
 	};
 
 	//TODO: Fix to work cross platform
-	cv::Mat GetDecompressedFrame(int index) {
-		cv::Mat output(this->height, this->width, CV_MAKETYPE(this->bits_allocated, this->samples_per_pixel));
+	bool GetDecompressedFrame(cv::Mat& in, int index) {
 
 		try {
 			if (index < 0 || index > this->frame_count - 1)
 				throw std::runtime_error("Invalid index for DICOM file in GetFrame: " + std::to_string(index));
-			
+
 			//Get pixel data from dicom image at location
 			Uint8 *pixel_data = (Uint8 *)this->frames->getOutputData(this->bits_allocated, index);
 			cv::Mat result(this->height, this->width, CV_MAKETYPE(this->bits_allocated, this->samples_per_pixel), (long *)pixel_data);
-			output = result.clone();
+
+			in = result.clone();
+			this->frame_index = index;
 
 			//Convert RGB to BGR
 			if (this->samples_per_pixel == 3) {
 				std::vector<cv::Mat> channels_bgr;
-				cv::split(output, channels_bgr);
+				cv::split(in, channels_bgr);
 				std::vector<cv::Mat> channels_rgb = { channels_bgr[2], channels_bgr[1], channels_bgr[0] };
-				cv::merge(channels_rgb, output);
+				cv::merge(channels_rgb, in);
 			}
 		}
 		catch (std::exception err) {
 			std::cerr << err.what() << std::endl;
+			return false;
 		}
 
-		this->frame_index = index;
-		return output;
+		return true;
 	};
 
 	int GetWidth() {

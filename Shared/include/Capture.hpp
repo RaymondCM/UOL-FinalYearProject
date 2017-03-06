@@ -8,6 +8,7 @@ class Capture {
 public:
 	Capture(std::string device) {
 		this->vc = cv::VideoCapture(device);
+		this->frame_count = vc.get(cv::CAP_PROP_FRAME_COUNT);
 		this->width = vc.get(cv::CAP_PROP_FRAME_WIDTH);
 		this->height = vc.get(cv::CAP_PROP_FRAME_HEIGHT);
 	};
@@ -34,7 +35,11 @@ public:
 	
 	int GetPos() { return this->frame_index; };
 
+	int GetFrameCount() {
+		return this->frame_count;
+	};
+
 private:
 	cv::VideoCapture vc;
-	int width, height, frame_index = 0;
+	int width, height, frame_index = 0, frame_count;
 };
