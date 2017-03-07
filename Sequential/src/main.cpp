@@ -78,10 +78,11 @@ int main(int argc, char **argv)
 		cv::cvtColor(curr, currGray, cv::COLOR_BGR2GRAY);
 
 		//Create point array to store 
-		cv::Vec4f * motionVectors = new cv::Vec4f[bCount];
+		cv::Point * motionVectors = new cv::Point[bCount];
+		cv::Point2f * motionDetails = new cv::Point2f[bCount];
 
 		//Perform Block Matching
-		BlockMatching::FullExhastive(currGray, prevGray, motionVectors, blockSize, width, height, wB, hB);
+		BlockMatching::FullExhastive(currGray, prevGray, motionVectors, motionDetails, blockSize, width, height, wB, hB);
 
 		//Clock timer so FPS isn't inclusive of drawing onto the screen
 		pT.toc();
@@ -89,14 +90,16 @@ int main(int argc, char **argv)
 		cv::Mat display = curr.clone();
 
 		//Draw Motion Vectors from mVecBuffer
-		Util::drawMotionVectorsVec4(display, motionVectors, wB, hB, blockSize);
-		Util::visualiseMotionVectorsVec4(display, motionVectors, wB, hB, blockSize, 20, 0.2);
+		Util::drawMotionVectors(display, motionVectors, wB, hB, blockSize);
+		Util::visualiseMotionVectors(display, motionVectors, motionDetails, wB, hB, blockSize, 20, 0.2);
 
 		//Free pointer block
 		free(motionVectors);
+		free(motionDetails);
 
 		//Finish render timer
 		rT.toc();
+		
 
 		//Display program information on frame
 		Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));

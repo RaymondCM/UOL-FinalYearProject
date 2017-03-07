@@ -66,8 +66,8 @@ namespace Util {
 	}
 
 	
-	template<typename T>
-	void visualiseMotionVectors(cv::Mat &canvas, T *& motionVectors, unsigned int wB, unsigned int hB, int blockSize, 
+	template<typename T, typename X>
+	void visualiseMotionVectors(cv::Mat &canvas, T *& motionVectors, X *& motionDetails, unsigned int wB, unsigned int hB, int blockSize,
 		int thresh = 1, float min_len = 0.0) {
 
 		cv::Mat mask;
@@ -89,9 +89,9 @@ namespace Util {
 				cv::Point pos(i * blockSize, j * blockSize);
 				cv::Point mVec(motionVectors[idx].x, motionVectors[idx].y);
 
-				float len = (motionVectors[idx].w / max_len);
+				float len = (motionDetails[idx].y / max_len);
 				if (len >= min_len) {
-					float angle = motionVectors[idx].z;
+					float angle = motionDetails[idx].x;
 					cv::rectangle(colour_image, pos, pos + cv::Point(blockSize, blockSize), HSVToBGR(angle, len, 1), CV_FILLED);
 					//cv::putText(colour_image, std::to_string((int)angle), pos, cv::FONT_HERSHEY_COMPLEX_SMALL, 0.4, cv::Scalar(255, 255, 255));
 					//std::cout << "A:" << angle << ", L:" << len << std::endl;
@@ -147,73 +147,6 @@ namespace Util {
 		out *= 255;
 
 		return out;
-	}
-
-	//TODO create custom struct for storing values or combine both targets
-	//Has to be defined here because OPENCL isnt supported in both targets
-	void drawMotionVectorsVec4(cv::Mat &canvas, cv::Vec4f *& motionVectors, unsigned int wB, unsigned int hB, int blockSize,
-		cv::Scalar rectColour = cv::Scalar(255), cv::Scalar lineColour = cv::Scalar(0, 255, 255)) {
-		for (size_t i = 0; i < wB; i++)
-		{
-			for (size_t j = 0; j < hB; j++)
-			{
-				//Calculate repective position of motion vector
-				int idx = i + j * wB;
-
-				//Offset drawn point to represent middle rather than top left of block
-				cv::Point offset(blockSize / 2, blockSize / 2);
-				cv::Point pos(i * blockSize, j * blockSize);
-				cv::Point mVec(motionVectors[idx][0], motionVectors[idx][1]);
-
-				//cv::rectangle(canvas, pos, pos + cv::Point(blockSize, blockSize), rectColour);
-				cv::arrowedLine(canvas, pos + offset, mVec + offset, lineColour);
-			}
-		}
-	}
-
-	//Has to be defined here because OPENCL isnt supported in both targets
-	void visualiseMotionVectorsVec4(cv::Mat &canvas, cv::Vec4f *& motionVectors, unsigned int wB, unsigned int hB, int blockSize,
-		int thresh = 1, float min_len = 0.0) {
-
-		cv::Mat mask;
-		cv::cvtColor(canvas, mask, cv::COLOR_RGB2GRAY);
-		threshold(mask, mask, thresh, 255, 0);
-
-		cv::Mat colour_image = canvas.clone(), dst;
-		float max_len = euclideanDistance(cv::Point(0, 0), cv::Point(blockSize, blockSize));
-
-		for (size_t i = 0; i < wB; i++)
-		{
-			for (size_t j = 0; j < hB; j++)
-			{
-				//Calculate repective position of motion vector
-				int idx = i + j * wB;
-
-				//Offset drawn point to represent middle rather than top left of block
-				cv::Point offset(blockSize / 2, blockSize / 2);
-				cv::Point pos(i * blockSize, j * blockSize);
-				cv::Point mVec(motionVectors[idx][0], motionVectors[idx][1]);
-
-				float len = (motionVectors[idx][3] / max_len);
-				if (len >= min_len) {
-					float angle = motionVectors[idx][2];
-					cv::rectangle(colour_image, pos, pos + cv::Point(blockSize, blockSize), HSVToBGR(angle, len, 1), CV_FILLED);
-					//cv::putText(colour_image, std::to_string((int)angle), pos, cv::FONT_HERSHEY_COMPLEX_SMALL, 0.4, cv::Scalar(255, 255, 255));
-					//std::cout << "A:" << angle << ", L:" << len << std::endl;
-				}
-			}
-		}
-
-		for (int i = 0; i < wB * blockSize; i++) {
-			for (int j = 0; j < hB * blockSize; j++) {
-				if (mask.at<uchar>(j, i) > 0) {
-					//Simple alpha blending 50/50
-					canvas.at<cv::Vec3b>(j, i) = AlphaBlend(canvas.at<cv::Vec3b>(j, i), colour_image.at<cv::Vec3b>(j, i), 0.4);
-				}
-			}
-		}
-
-		//cv::addWeighted(canvas, 0.5, colour_image, 0.5, 0.0, canvas);
 	}
 
 	void drawText(cv::Mat& canvas, std::string f, std::string bS, std::string processed_fps, std::string rendered_fps, cv::Scalar colour = cv::Scalar(255, 255, 255)) {
