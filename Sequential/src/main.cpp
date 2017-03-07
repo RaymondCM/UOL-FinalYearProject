@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	Capture >> curr;
 
 	//Define BM parameters
-	int width = Capture.GetWidth(), height = Capture.GetHeight();
+	int width = Capture.GetWidth(), height = Capture.GetHeight(), frame_count = Capture.GetFrameCount();
 
 	//Get all possible block sizes
 	std::vector<int> bSizes = Util::getBlockSizes(width, height);
@@ -40,6 +40,7 @@ int main(int argc, char **argv)
 	//Create output Window and use Sequential as unique winname
 	std::string winname("Sequential");
 	cv::namedWindow(winname, cv::WINDOW_FREERATIO);
+	cv::setMouseCallback(winname, Util::MouseCallback, NULL);
 
 	//Should the image file loop?
 	bool loop = true;
@@ -77,7 +78,7 @@ int main(int argc, char **argv)
 		cv::cvtColor(curr, currGray, cv::COLOR_BGR2GRAY);
 
 		//Create point array to store 
-		cv::Point * motionVectors = new cv::Point[bCount];
+		cv::Vec4f * motionVectors = new cv::Vec4f[bCount];
 
 		//Perform Block Matching
 		BlockMatching::FullExhastive(currGray, prevGray, motionVectors, blockSize, width, height, wB, hB);
@@ -88,7 +89,8 @@ int main(int argc, char **argv)
 		cv::Mat display = curr.clone();
 
 		//Draw Motion Vectors from mVecBuffer
-		Util::drawMotionVectors(display, motionVectors, wB, hB, blockSize);
+		Util::drawMotionVectorsVec4(display, motionVectors, wB, hB, blockSize);
+		Util::visualiseMotionVectorsVec4(display, motionVectors, wB, hB, blockSize, 20, 0.2);
 
 		//Free pointer block
 		free(motionVectors);
