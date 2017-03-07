@@ -134,7 +134,8 @@ int main(int argc, char **argv)
 			cl::Image2D currImage(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, fmt, width, height, 0, currBuffer);
 
 			//Create buffer to store motion vectors for blocks of wB * hB (bCount)
-			cl::Buffer motionVectors(context, CL_MEM_WRITE_ONLY, sizeof(cl_float4) * bCount);
+			cl::Buffer motionVectors(context, CL_MEM_WRITE_ONLY, sizeof(cl_int2) * bCount);
+			cl::Buffer motionDetails(context, CL_MEM_WRITE_ONLY, sizeof(cl_float2) * bCount);
 
 			//Create motion_estimation kernel and set arguments 
 			cl::Kernel kernel(program, "full_exhastive");
@@ -144,6 +145,7 @@ int main(int argc, char **argv)
 			kernel.setArg(3, width);
 			kernel.setArg(4, height);
 			kernel.setArg(5, motionVectors);
+			kernel.setArg(6, motionDetails);
 
 			//Queue kernel with global range spanning all blocks
 			cl::NDRange global((size_t)wB, (size_t)hB, 1);
@@ -151,9 +153,13 @@ int main(int argc, char **argv)
 			
 			//queue.finish();
 
+			//TODO: declare outside loop
 			//Read motion vector buffer from device
-			cl_float4 * mVecBuffer = new cl_float4[bCount];
-			queue.enqueueReadBuffer(motionVectors, 0, 0, sizeof(cl_float4) * bCount, mVecBuffer);
+			cl_int2 * mVecBuffer = new cl_int2[bCount];
+			cl_float2 * mDetailsBuffer = new cl_float2[bCount];
+
+			queue.enqueueReadBuffer(motionVectors, 0, 0, sizeof(cl_int2) * bCount, mVecBuffer);
+			queue.enqueueReadBuffer(motionDetails, 0, 0, sizeof(cl_float2) * bCount, mDetailsBuffer);
 
 			//Clock timer so FPS isn't inclusive of drawing onto the screen
 			pT.toc();
@@ -163,10 +169,11 @@ int main(int argc, char **argv)
 
 			//Draw Motion Vectors from mVecBuffer
 			Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize);
-			Util::visualiseMotionVectors(display, mVecBuffer, wB, hB, blockSize, 20, 0.2);
+			Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, 20, 0.2);
 
 			//Free pointer block
 			free(mVecBuffer);
+			free(mDetailsBuffer);
 			
 			//Finish render timer
 			rT.toc();

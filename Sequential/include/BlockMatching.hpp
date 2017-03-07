@@ -43,7 +43,7 @@ namespace BlockMatching {
 		return cv::Vec3i(0, 0, MatrixSum(prev, refPoint, blockSize));
 	}
 
-	void FullExhastive(cv::Mat& curr, cv::Mat& ref, cv::Vec4f* &motionVectors, int blockSize, int width, int height, int wB, int hB) {
+	void FullExhastive(cv::Mat& curr, cv::Mat& ref, cv::Point* &motionVectors, cv::Point2f* &motionDetails, int blockSize, int width, int height, int wB, int hB) {
 		//Loop over all possible blocks in frame
 		for (int x = 0; x < wB; x++) {
 			for (int y = 0; y < hB; y++) {
@@ -82,13 +82,15 @@ namespace BlockMatching {
 								distanceToBlock = newDistance;
 								float p0x = currPoint.x, p0y = currPoint.y - sqrt((float)(square(refPoint.x - p0x) + square(refPoint.y - currPoint.y)));
 								float angle = (2 * atan2(refPoint.y - p0y, refPoint.x - p0x)) * 180 / M_PI;
-								motionVectors[idx] = cv::Vec4f(refPoint.x, refPoint.y, angle, distanceToBlock);
+								motionVectors[idx] = refPoint;
+								motionDetails[idx] = cv::Point2f(angle, distanceToBlock);
 							}
 							else if (err == bestErr && newDistance <= distanceToBlock) {
 								distanceToBlock = newDistance;
 								float p0x = currPoint.x, p0y = currPoint.y - sqrt((float)(square(refPoint.x - p0x) + square(refPoint.y - currPoint.y)));
 								float angle = (2 * atan2(refPoint.y - p0y, refPoint.x - p0x)) * 180 / M_PI;
-								motionVectors[idx] = cv::Vec4f(refPoint.x, refPoint.y, angle, distanceToBlock);
+								motionVectors[idx] = refPoint;
+								motionDetails[idx] = cv::Point2f(angle, distanceToBlock);
 							}
 						}
 					}

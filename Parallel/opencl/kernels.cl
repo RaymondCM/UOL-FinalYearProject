@@ -60,7 +60,8 @@ __kernel void full_exhastive(
 	const uint blockSize,
 	uint width,
 	uint height,
-	__global float4 * motionVectors
+	__global int2 * motionVectors,
+	__global float2 * motionDetails
 )
 {
 	//Get position within work group and reference block in current frame
@@ -103,13 +104,15 @@ __kernel void full_exhastive(
 					distanceToBlock = newDistance;
 					float p0x = currPoint.x, p0y = currPoint.y - sqrt((float)(square(refPoint.x - p0x) + square(refPoint.y - currPoint.y)));
 					float angle = (2 * atan2(refPoint.y - p0y, refPoint.x - p0x)) * 180 / M_PI;
-					motionVectors[idx] = (float4)(refPoint.x, refPoint.y, angle, distanceToBlock);
+					motionVectors[idx] = refPoint;
+					motionDetails[idx] = (float2)(angle, distanceToBlock);
 				}
 				else if (err == bestErr && newDistance <= distanceToBlock) {
 					distanceToBlock = newDistance;
 					float p0x = currPoint.x, p0y = currPoint.y - sqrt((float)(square(refPoint.x - p0x) + square(refPoint.y - currPoint.y)));
 					float angle = (2 * atan2(refPoint.y - p0y, refPoint.x - p0x)) * 180 / M_PI;
-					motionVectors[idx] = (float4)(refPoint.x, refPoint.y, angle, distanceToBlock);
+					motionVectors[idx] = refPoint;
+					motionDetails[idx] = (float2)(angle, distanceToBlock);
 				}
 			}
 		}
