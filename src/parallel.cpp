@@ -23,17 +23,12 @@
 int main(int argc, char **argv)
 {
     std::string projectRoot(".");
-    std::string targetRoot(".");
 
 	#ifdef PROJECT_ROOT
 		projectRoot = PROJECT_ROOT;
 	#endif
 
-	#ifdef TARGET_ROOT
-		targetRoot = TARGET_ROOT;
-	#endif
-
-    std::string kernelFile = targetRoot + "/opencl/kernels.cl";
+    std::string kernelFile = projectRoot + "/opencl/kernels.cl";
 	std::string dataPath = projectRoot + "/data/IM_0068-Bmode.dcm";
 	std::string dataPathVideo = projectRoot + "/data/input.avi";
 	

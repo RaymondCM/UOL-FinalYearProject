@@ -100,7 +100,6 @@ int main(int argc, char **argv)
 		//Finish render timer
 		rT.toc();
 		
-
 		//Display program information on frame
 		Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
 

@@ -92,6 +92,7 @@ namespace Util {
 				float len = (motionDetails[idx].y / max_len);
 				if (len >= min_len) {
 					float angle = motionDetails[idx].x;
+					//Rotate angle by 90
 					cv::rectangle(colour_image, pos, pos + cv::Point(blockSize, blockSize), HSVToBGR(angle, len, 1), CV_FILLED);
 					//cv::putText(colour_image, std::to_string((int)angle), pos, cv::FONT_HERSHEY_COMPLEX_SMALL, 0.4, cv::Scalar(255, 255, 255));
 					//std::cout << "A:" << angle << ", L:" << len << std::endl;
