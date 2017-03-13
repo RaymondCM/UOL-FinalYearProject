@@ -22,15 +22,20 @@
 
 int main(int argc, char **argv)
 {
-    std::string projectRoot(".");
+    std::string root_directory(".");
+    std::string project_directory(".");
 
-	#ifdef PROJECT_ROOT
-		projectRoot = PROJECT_ROOT;
+	#ifdef ROOT_DIR
+	root_directory = ROOT_DIR;
 	#endif
 
-    std::string kernelFile = projectRoot + "/opencl/kernels.cl";
-	std::string dataPath = projectRoot + "/data/IM_0068-Bmode.dcm";
-	std::string dataPathVideo = projectRoot + "/data/input.avi";
+	#ifdef PROJECT_ROOT
+		project_directory = PROJECT_ROOT;
+	#endif
+
+    std::string kernelFile = project_directory + "/opencl/kernels.cl";
+	std::string dataPath = root_directory + "/data/IM_0068-Bmode.dcm";
+	std::string dataPathVideo = root_directory + "/data/input.avi";
 	
 	//Get Context
     CLContext clUtil(argc, argv);
