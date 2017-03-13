@@ -14,9 +14,9 @@ int main(int argc, char **argv)
 {
 	std::string projectRoot(".");
 
-#ifdef PROJECT_ROOT
-	projectRoot = PROJECT_ROOT;
-#endif
+	#ifdef ROOT_DIR
+		projectRoot = ROOT_DIR;
+	#endif
 
 	std::string dataPath = projectRoot + "/data/IM_0068-Bmode.dcm";
 	std::string dataPathVideo = projectRoot + "/data/input.avi";
@@ -100,6 +100,7 @@ int main(int argc, char **argv)
 		//Finish render timer
 		rT.toc();
 		
+
 		//Display program information on frame
 		Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
 

@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.6.0)
+
+#Set enviroment variable for target files location
+add_definitions(-DPROJECT_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
+
+#Add all source files
+add_executable(Seq_BlockMatching "src/main.cpp")
+
+#Include target specific include directories
+target_include_directories(Seq_BlockMatching PUBLIC include)
+target_include_directories(Seq_BlockMatching PUBLIC ${BM_SHARED_LIBS})
+target_include_directories(Seq_BlockMatching PUBLIC ${SHARED_LIBS})
+target_include_directories(Seq_BlockMatching PUBLIC ${DCMTK_INCLUDE_DIRS})
+
+#Link library files
+target_link_libraries(Seq_BlockMatching ${DCMTK_LIBRARIES} )
+target_link_libraries(Seq_BlockMatching ${OpenCV_LIBS} )
