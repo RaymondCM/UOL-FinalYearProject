@@ -8,10 +8,13 @@ add_executable(Seq_BlockMatching "src/main.cpp")
 
 #Include target specific include directories
 target_include_directories(Seq_BlockMatching PUBLIC include)
-target_include_directories(Seq_BlockMatching PUBLIC ${BM_SHARED_LIBS})
 target_include_directories(Seq_BlockMatching PUBLIC ${SHARED_LIBS})
-target_include_directories(Seq_BlockMatching PUBLIC ${DCMTK_INCLUDE_DIRS})
+
+#Commented out temporarily to fix VS2017 IDE intelisense error
+#TODO: Uncomment this line
+#target_include_directories(Seq_BlockMatching PUBLIC ${BM_SHARED_LIBS})
+#target_include_directories(Seq_BlockMatching PUBLIC ${DCMTK_INCLUDE_DIRS})
+#target_link_libraries(Seq_BlockMatching ${DCMTK_LIBRARIES} )
 
 #Link library files
-target_link_libraries(Seq_BlockMatching ${DCMTK_LIBRARIES} )
 target_link_libraries(Seq_BlockMatching ${OpenCV_LIBS} )

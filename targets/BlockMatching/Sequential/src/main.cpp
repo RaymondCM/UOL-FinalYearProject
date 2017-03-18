@@ -4,8 +4,11 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
+//Commented out temporarily to fix VS2017 IDE intelisense error
+//TODO: Uncomment this line
+//#include "Dicom.hpp"
+
 #include "BlockMatching.hpp"
-#include "Dicom.hpp"
 #include "Capture.hpp"
 #include "Timer.hpp"
 #include "Utils.hpp"
@@ -22,8 +25,8 @@ int main(int argc, char **argv)
 	std::string dataPathVideo = projectRoot + "/data/input.avi";
 
 	//Open Video Capture to File
-	Dicom Capture(dataPath, true);
-	//Capture Capture(dataPathVideo);
+	//Dicom Capture(dataPath, true);
+	Capture Capture(dataPathVideo);
 
 	//Allocate Mat for previous and current frame
 	cv::Mat prev, curr, prevGray, currGray;
