@@ -57,6 +57,7 @@ int3 closest_inbound_neighbour(image2d_t prev, int2 currPoint, const int sWindow
 __kernel void full_exhastive(
 	__read_only image2d_t prev,
 	__read_only image2d_t curr,
+	const uint step_size,
 	const uint blockSize,
 	uint width,
 	uint height,
@@ -66,7 +67,7 @@ __kernel void full_exhastive(
 {
 	//Get position within work group and reference block in current frame
 	const int x = get_global_id(0), y = get_global_id(1);
-	const int2 currPoint = { x * blockSize, y * blockSize };
+	const int2 currPoint = { x * step_size, y * step_size };
 
 	//Get number of blocks spanning the x-axis for buffer indexing
 	const int wB = get_global_size(0);
