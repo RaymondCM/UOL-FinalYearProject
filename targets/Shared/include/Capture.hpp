@@ -39,6 +39,9 @@ public:
 		return this->frame_count;
 	};
 
+	bool isLastFrame() {
+		return this->frame_count - 1 == this->frame_index;
+	}
 private:
 	cv::VideoCapture vc;
 	int width, height, frame_index = 0, frame_count;

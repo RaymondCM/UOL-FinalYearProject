@@ -14,8 +14,11 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
+//Commented out temporarily to fix VS2017 IDE intelisense error
+//TODO: Uncomment this line
+//#include "Dicom.hpp"
+
 #include "CLContext.hpp"
-#include "Dicom.hpp"
 #include "Capture.hpp"
 #include "Timer.hpp"
 #include "Utils.hpp"
@@ -64,8 +67,8 @@ int main(int argc, char **argv)
 	cl::CommandQueue queue(context);
 
 	//Open Video Capture to File
-	Dicom Capture(dataPath, true);
-	//Capture Capture(dataPathVideo);
+	//Dicom Capture(dataPath, true);
+	Capture Capture(dataPathVideo);
 
 	//Allocate Mat for previous and current frame
 	cv::Mat prev, curr, prevGray, currGray;
@@ -76,7 +79,9 @@ int main(int argc, char **argv)
 
 	//Get all possible block sizes
 	std::vector<int> bSizes = Util::getBlockSizes(width, height);
-	int blockSize = bSizes.at(6), bID = 6, wB = width / blockSize, hB = height / blockSize;
+	int  bID = 6, blockSize = bSizes.at(bID);
+	int stepSize = Util::getStepSize(blockSize), wB = width / blockSize * blockSize / stepSize, hB = height / blockSize * blockSize / stepSize;
+
 	int bCount = wB * hB;
 
 	//Tell OpenCV to use OpenCL
@@ -92,7 +97,7 @@ int main(int argc, char **argv)
 
 	//Create Timer to time each frame loop and variables for framerate
 	//Log Processed Frames per second and rendered
-	Timer pT(30), rT(30);
+	Timer pT(50), rT(50);
 
 	//Timeout to wait for key press (< 1 Waits indef)
 	int cvWaitTime = 0;
@@ -108,7 +113,7 @@ int main(int argc, char **argv)
 			Capture >> curr;
 
 			//Break if invalid frames and no loop
-			if (prev.empty() || curr.empty()) {
+			if (Capture.isLastFrame() || prev.empty() || curr.empty()) {
 				//Reset pointer to frame if loop
 				if (loop) {
 					Capture.SetPos(0);
@@ -141,11 +146,12 @@ int main(int argc, char **argv)
 			cl::Kernel kernel(program, "full_exhastive");
 			kernel.setArg(0, prevImage);
 			kernel.setArg(1, currImage);
-			kernel.setArg(2, blockSize);
-			kernel.setArg(3, width);
-			kernel.setArg(4, height);
-			kernel.setArg(5, motionVectors);
-			kernel.setArg(6, motionDetails);
+			kernel.setArg(2, stepSize);
+			kernel.setArg(3, blockSize);
+			kernel.setArg(4, width);
+			kernel.setArg(5, height);
+			kernel.setArg(6, motionVectors);
+			kernel.setArg(7, motionDetails);
 
 			//Queue kernel with global range spanning all blocks
 			cl::NDRange global((size_t)wB, (size_t)hB, 1);
@@ -168,8 +174,12 @@ int main(int argc, char **argv)
 			cv::Mat display = curr.clone();
 
 			//Draw Motion Vectors from mVecBuffer
-			Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize);
-			Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, 20, 0.2);
+			//Util::drawGraph(motionVectors, motionDetails);
+			cv::Point2f avg_vector = Util::analyseData(mVecBuffer, mDetailsBuffer, wB * hB);
+			Util::drawArrow(display, avg_vector);
+
+			//Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
+			//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 1, 0.2);
 
 			//Free pointer block
 			free(mVecBuffer);
@@ -179,7 +189,7 @@ int main(int argc, char **argv)
 			rT.toc();
 
 			//Display program information on frame
-			Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
+			Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(stepSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
 
 			//Display visualisation of motion vectors
 			cv::imshow(winname, display);
@@ -193,15 +203,17 @@ int main(int argc, char **argv)
 				case '+':
 					bID = bID < bSizes.size() - 1 ? bID + 1 : bID;
 					blockSize = bSizes.at(bID);
-					wB = width / blockSize;
-					hB = height / blockSize;
+					stepSize = Util::getStepSize(blockSize);
+					wB = width / blockSize * blockSize / stepSize;
+					hB = height / blockSize * blockSize / stepSize;
 					bCount = wB * hB;
 					break;
 				case '-':
 					bID = bID > 0 ? bID - 1 : 0;
 					blockSize = bSizes.at(bID);
-					wB = width / blockSize;
-					hB = height / blockSize;
+					stepSize = Util::getStepSize(blockSize);
+					wB = width / blockSize * blockSize / stepSize;
+					hB = height / blockSize * blockSize / stepSize;
 					bCount = wB * hB;
 					break;
 				default:

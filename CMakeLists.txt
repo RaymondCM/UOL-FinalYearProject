@@ -11,8 +11,9 @@ set (CMAKE_CXX_STANDARD 11)
 add_definitions(-DROOT_DIR="${CMAKE_SOURCE_DIR}")  
 
 #Load OSConfig.h from DCMTK packag
+#TODO: Add dependancy
 add_definitions(-DHAVE_CONFIG_H)
-find_package(DCMTK REQUIRED)
+find_package(DCMTK)
 
 if (WIN32)
 	SET(OpenCV_DIR C:/OpenCV)
