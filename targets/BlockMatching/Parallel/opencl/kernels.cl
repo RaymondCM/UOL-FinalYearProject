@@ -100,15 +100,8 @@ __kernel void full_exhastive(
 				float newDistance = euclidean_distance(refPoint.x, currPoint.x, refPoint.y, currPoint.y);
 
 				//TODO: Calculate angle if point was on radius of blocksize/2 rather than radius of point to center distance
-				if (err < bestErr) {
+				if (err < bestErr || (err == bestErr && newDistance <= distanceToBlock)) {
 					bestErr = err;
-					distanceToBlock = newDistance;
-					float p0x = currPoint.x, p0y = currPoint.y - sqrt((float)(square(refPoint.x - p0x) + square(refPoint.y - currPoint.y)));
-					float angle = (2 * atan2(refPoint.y - p0y, refPoint.x - p0x)) * 180 / M_PI;
-					motionVectors[idx] = refPoint;
-					motionDetails[idx] = (float2)(angle, distanceToBlock);
-				}
-				else if (err == bestErr && newDistance <= distanceToBlock) {
 					distanceToBlock = newDistance;
 					float p0x = currPoint.x, p0y = currPoint.y - sqrt((float)(square(refPoint.x - p0x) + square(refPoint.y - currPoint.y)));
 					float angle = (2 * atan2(refPoint.y - p0y, refPoint.x - p0x)) * 180 / M_PI;
