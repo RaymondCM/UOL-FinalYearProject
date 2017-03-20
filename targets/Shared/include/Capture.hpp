@@ -30,9 +30,12 @@ public:
 	int GetWidth() { return this->width; };
 
 	int GetHeight() { return this->height; };
-	
-	void SetPos(int index = 0) { this->frame_index = index; };
-	
+
+	void SetPos(int index = 0) { 
+		this->vc.set(cv::CAP_PROP_POS_AVI_RATIO, index); 
+		this->frame_index = index; 
+	};
+
 	int GetPos() { return this->frame_index; };
 
 	int GetFrameCount() {
