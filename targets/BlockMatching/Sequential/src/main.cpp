@@ -12,14 +12,15 @@
 #include "Capture.hpp"
 #include "Timer.hpp"
 #include "Utils.hpp"
+#include "SimpleGraph.hpp"
 
 int main(int argc, char **argv)
 {
 	std::string projectRoot(".");
 
-	#ifdef ROOT_DIR
-		projectRoot = ROOT_DIR;
-	#endif
+#ifdef ROOT_DIR
+	projectRoot = ROOT_DIR;
+#endif
 
 	std::string dataPath = projectRoot + "/data/IM_0068-Bmode.dcm";
 	std::string dataPathVideo = projectRoot + "/data/input.avi";
@@ -37,7 +38,12 @@ int main(int argc, char **argv)
 
 	//Get all possible block sizes
 	std::vector<int> bSizes = Util::getBlockSizes(width, height);
-	int blockSize = bSizes.at(6), bID = 6, wB = width / blockSize, hB = height / blockSize;
+	int  bID = 5, blockSize = bSizes.at(bID);
+	int stepSize = Util::getStepSize(blockSize);
+
+	//Minus one because last block along x * stepSize + y * stepSize * wB will always be out of bounds
+	int wB = (width / blockSize * blockSize / stepSize) - 1, hB = (height / blockSize * blockSize / stepSize) - 1;
+
 	int bCount = wB * hB;
 
 	//Create output Window and use Sequential as unique winname
@@ -50,7 +56,10 @@ int main(int argc, char **argv)
 
 	//Create Timer to time each frame loop and variables for framerate
 	//Log Processed Frames per second and rendered
-	Timer pT(30), rT(30);
+	Timer pT(50), rT(50);
+
+	//Create Real-Time graph to display average angular motion
+	SimpleGraph motion_graph(1024, 512, 128);
 
 	//Timeout to wait for key press (< 1 Waits indef)
 	int cvWaitTime = 0;
@@ -85,7 +94,7 @@ int main(int argc, char **argv)
 		cv::Point2f * motionDetails = new cv::Point2f[bCount];
 
 		//Perform Block Matching
-		BlockMatching::FullExhastive(currGray, prevGray, motionVectors, motionDetails, blockSize, width, height, wB, hB);
+		BlockMatching::FullExhastive(currGray, prevGray, motionVectors, motionDetails, blockSize, stepSize, width, height, wB, hB);
 
 		//Clock timer so FPS isn't inclusive of drawing onto the screen
 		pT.toc();
@@ -93,8 +102,13 @@ int main(int argc, char **argv)
 		cv::Mat display = curr.clone();
 
 		//Draw Motion Vectors from mVecBuffer
-		Util::drawMotionVectors(display, motionVectors, wB, hB, blockSize);
-		Util::visualiseMotionVectors(display, motionVectors, motionDetails, wB, hB, blockSize, 20, 0.2);
+		//Util::drawGraph(motionVectors, motionDetails);
+		cv::Vec4f averages = Util::analyseData(motionVectors, motionDetails, wB * hB);
+		motion_graph.AddData(averages[3]);
+		//Util::drawArrow(display, cv::Point(averages[0], averages[1]));
+
+		//Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
+		//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
 
 		//Free pointer block
 		free(motionVectors);
@@ -102,13 +116,14 @@ int main(int argc, char **argv)
 
 		//Finish render timer
 		rT.toc();
-		
 
 		//Display program information on frame
-		Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
+		Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize),
+			std::to_string(stepSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
 
 		//Display visualisation of motion vectors
 		cv::imshow(winname, display);
+		motion_graph.Show();
 
 		key = (char)cv::waitKey(cvWaitTime);
 
@@ -119,15 +134,17 @@ int main(int argc, char **argv)
 		case '+':
 			bID = bID < bSizes.size() - 1 ? bID + 1 : bID;
 			blockSize = bSizes.at(bID);
-			wB = width / blockSize;
-			hB = height / blockSize;
+			stepSize = Util::getStepSize(blockSize);
+			wB = (width / blockSize * blockSize / stepSize) - 1;
+			hB = (height / blockSize * blockSize / stepSize) - 1;
 			bCount = wB * hB;
 			break;
 		case '-':
 			bID = bID > 0 ? bID - 1 : 0;
 			blockSize = bSizes.at(bID);
-			wB = width / blockSize;
-			hB = height / blockSize;
+			stepSize = Util::getStepSize(blockSize);
+			wB = (width / blockSize * blockSize / stepSize) - 1;
+			hB = (height / blockSize * blockSize / stepSize) - 1;
 			bCount = wB * hB;
 			break;
 		default:
