@@ -92,7 +92,7 @@ namespace Util {
 	}
 
 	template<typename T, typename X> //X,Y MAGNITUDE, ANGLE
-	cv::Point2f analyseData(T*& motion_points, X*& motion_info, int size) {
+	cv::Vec4f analyseData(T*& motion_points, X*& motion_info, int size) {
 		cv::Point2f average_point, point_sum(0,0);
 		double average_magnitude = 0, magnitude_sum = 0;
 		double average_angle = 0, angle_sum = 0;
@@ -110,7 +110,7 @@ namespace Util {
 		std::cout << "Averages: Point(" << average_point.x << ", " << average_point.y 
 			<< ")\tMagnitude(" << average_magnitude << ")\tAngle(" << average_angle << ")" << std::endl;
 		
-		return average_point;
+		return cv::Vec4f(average_point.x, average_point.y, average_magnitude, average_angle);
 	}
 
 	void drawArrow(cv::Mat& canvas, cv::Point2f p) {

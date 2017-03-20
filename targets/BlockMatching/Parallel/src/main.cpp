@@ -1,4 +1,4 @@
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+﻿#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #define __CL_ENABLE_EXCEPTIONS
 
 #include <iostream>
@@ -22,9 +22,11 @@
 #include "Capture.hpp"
 #include "Timer.hpp"
 #include "Utils.hpp"
+#include "SimpleGraph.hpp"
 
 int main(int argc, char **argv)
 {
+
     std::string root_directory(".");
     std::string project_directory(".");
 
@@ -99,6 +101,7 @@ int main(int argc, char **argv)
 	//Log Processed Frames per second and rendered
 	Timer pT(50), rT(50);
 
+	SimpleGraph motion_graph(1024, 512, 128);
 	//Timeout to wait for key press (< 1 Waits indef)
 	int cvWaitTime = 0;
 	char key;
@@ -175,8 +178,9 @@ int main(int argc, char **argv)
 
 			//Draw Motion Vectors from mVecBuffer
 			//Util::drawGraph(motionVectors, motionDetails);
-			cv::Point2f avg_vector = Util::analyseData(mVecBuffer, mDetailsBuffer, wB * hB);
-			Util::drawArrow(display, avg_vector);
+			cv::Vec4f averages = Util::analyseData(mVecBuffer, mDetailsBuffer, wB * hB);
+			motion_graph.AddData(averages[3]);
+			Util::drawArrow(display, cv::Point(averages[0], averages[1]));
 
 			//Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
 			//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 1, 0.2);
@@ -193,6 +197,7 @@ int main(int argc, char **argv)
 
 			//Display visualisation of motion vectors
 			cv::imshow(winname, display);
+			motion_graph.Show();
 
 			key = (char)cv::waitKey(cvWaitTime);
 
