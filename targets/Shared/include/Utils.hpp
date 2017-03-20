@@ -119,7 +119,7 @@ namespace Util {
 	}
 
 	template<typename T>
-	void drawMotionVectors(cv::Mat &canvas, T *& motionVectors, unsigned int wB, unsigned int hB, int blockSize, int stepSize,
+	void drawMotionVectors(cv::Mat &canvas, T *& motionVectors, unsigned int wB, unsigned int hB, int blockSize, int stepSize, bool drawGrid = false,
 		cv::Scalar rectColour = cv::Scalar(255), cv::Scalar lineColour = cv::Scalar(0, 255, 255)) {
 		for (size_t i = 0; i < wB; i++)
 		{
@@ -133,7 +133,9 @@ namespace Util {
 				cv::Point pos(i * stepSize, j * stepSize);
 				cv::Point mVec(motionVectors[idx].x, motionVectors[idx].y);
 
-				cv::rectangle(canvas, pos, pos + cv::Point(blockSize, blockSize), rectColour);
+				if(drawGrid)
+					cv::rectangle(canvas, pos, pos + cv::Point(blockSize, blockSize), rectColour);
+				
 				cv::arrowedLine(canvas, pos + offset, mVec + offset, lineColour);
 			}
 		}

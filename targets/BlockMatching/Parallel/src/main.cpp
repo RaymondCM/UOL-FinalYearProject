@@ -81,8 +81,11 @@ int main(int argc, char **argv)
 
 	//Get all possible block sizes
 	std::vector<int> bSizes = Util::getBlockSizes(width, height);
-	int  bID = 6, blockSize = bSizes.at(bID);
-	int stepSize = Util::getStepSize(blockSize), wB = width / blockSize * blockSize / stepSize, hB = height / blockSize * blockSize / stepSize;
+	int  bID = 5, blockSize = bSizes.at(bID);
+	int stepSize = Util::getStepSize(blockSize);
+
+	//Minus one because last block along x * stepSize + y * stepSize * wB will always be out of bounds
+	int wB = (width / blockSize * blockSize / stepSize) - 1, hB = (height / blockSize * blockSize / stepSize) - 1;
 
 	int bCount = wB * hB;
 
@@ -101,7 +104,9 @@ int main(int argc, char **argv)
 	//Log Processed Frames per second and rendered
 	Timer pT(50), rT(50);
 
+	//Create Real-Time graph to display average angular motion
 	SimpleGraph motion_graph(1024, 512, 128);
+
 	//Timeout to wait for key press (< 1 Waits indef)
 	int cvWaitTime = 0;
 	char key;
@@ -180,10 +185,10 @@ int main(int argc, char **argv)
 			//Util::drawGraph(motionVectors, motionDetails);
 			cv::Vec4f averages = Util::analyseData(mVecBuffer, mDetailsBuffer, wB * hB);
 			motion_graph.AddData(averages[3]);
-			Util::drawArrow(display, cv::Point(averages[0], averages[1]));
+			//Util::drawArrow(display, cv::Point(averages[0], averages[1]));
 
 			//Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
-			//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 1, 0.2);
+			//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
 
 			//Free pointer block
 			free(mVecBuffer);
@@ -209,16 +214,16 @@ int main(int argc, char **argv)
 					bID = bID < bSizes.size() - 1 ? bID + 1 : bID;
 					blockSize = bSizes.at(bID);
 					stepSize = Util::getStepSize(blockSize);
-					wB = width / blockSize * blockSize / stepSize;
-					hB = height / blockSize * blockSize / stepSize;
+					wB = (width / blockSize * blockSize / stepSize) - 1;
+					hB = (height / blockSize * blockSize / stepSize) - 1;
 					bCount = wB * hB;
 					break;
 				case '-':
 					bID = bID > 0 ? bID - 1 : 0;
 					blockSize = bSizes.at(bID);
 					stepSize = Util::getStepSize(blockSize);
-					wB = width / blockSize * blockSize / stepSize;
-					hB = height / blockSize * blockSize / stepSize;
+					wB = (width / blockSize * blockSize / stepSize) - 1;
+					hB = (height / blockSize * blockSize / stepSize) - 1;
 					bCount = wB * hB;
 					break;
 				default:
