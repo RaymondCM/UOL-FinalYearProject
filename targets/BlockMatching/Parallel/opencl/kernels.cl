@@ -36,6 +36,30 @@ int matrix_sum(image2d_t img, int2 p, int bSize) {
 	return sum;
 }
 
+int row_sum(image2d_t img, int2 p, int len) {
+	int sum = 0;
+	
+	for (int i = 0; i < len; i++)
+	{
+		//Force value to be absolute to force the equality|x+y|<=|x|+|y| because xy=|x||y|=|xy|
+		sum += abs(read_imageui(img, sampler, (int2)(p.x + i, p.y)).x);	
+	}
+
+	return sum;
+}
+
+int col_sum(image2d_t img, int2 p, int len) {
+	int sum = 0;
+
+	for (int i = 0; i < len; i++)
+	{
+		//Force value to be absolute to force the equality|x+y|<=|x|+|y| because xy=|x||y|=|xy|
+		sum += abs(read_imageui(img, sampler, (int2)(p.x, p.y + i)).x);
+	}
+
+	return 0;
+}
+
 int sum_absolute_diff(image2d_t curr, image2d_t ref, int2 currPoint, int2 refPoint, int bSize) {
 	int curr_sum = matrix_sum(curr, currPoint, bSize);
 	int ref_sum = matrix_sum(ref, refPoint, bSize);
@@ -107,6 +131,95 @@ __kernel void full_exhastive(
 					float angle = (2 * atan2(refPoint.y - p0y, refPoint.x - p0x)) * 180 / M_PI;
 					motionVectors[idx] = refPoint;
 					motionDetails[idx] = (float2)(angle, distanceToBlock);
+				}
+			}
+		}
+	}
+}
+
+__kernel void full_exhastive_test(
+	__read_only image2d_t prev,
+	__read_only image2d_t curr,
+	const uint step_size,
+	const uint blockSize,
+	uint width,
+	uint height,
+	__global int2 * motionVectors,
+	__global float2 * motionDetails
+)
+{
+	//Get position within work group and reference block in current frame
+	const int x = get_global_id(0), y = get_global_id(1);
+	const int2 currPoint = { x * step_size, y * step_size };
+
+	//Get number of blocks spanning the x-axis for buffer indexing
+	const int wB = get_global_size(0);
+	int idx = x + y * wB;
+
+	//Set defaults
+	//motionVectors[idx] = currPoint;
+	//motionDetails[idx] = (float2)(0, 0);
+
+	//Get Sum of current block 
+	int current_err = matrix_sum(curr, currPoint, blockSize);
+
+	//Get closest block that's in bounds 
+	const int sWindow = blockSize;
+	int3 closest = closest_inbound_neighbour(prev, currPoint, sWindow, width, height, blockSize);
+	//int ref_err = closest.z;
+
+	float distanceToBlock = FLT_MAX;
+	int bestErr = INT_MAX, err;
+	int2 topLeft = { closest.x, closest.y };
+
+	int ref_err = INT_MAX;// matrix_sum(prev, topLeft, blockSize);
+	int last = blockSize - 1;
+	
+	for (int x = closest.x; x < sWindow; x++) {
+		int real_X = currPoint.x + x;
+		int real_Y = currPoint.y + closest.y;
+
+		if (is_in_bounds(real_X, real_Y, width, height, blockSize)) {
+			if (x == closest.x) {
+				//If X is topLeft calculate sum of top left
+				ref_err = matrix_sum(prev, (int2)(real_X, real_Y), blockSize);
+			}
+			else {
+				//If X (row) has moved right then minus (X - 1, Closest.Y) and add (X + (blockSize - 1), Closest.Y)
+				int x_left = col_sum(prev, (int2)(real_X - 1, real_Y), blockSize);
+				int x_last = col_sum(prev, (int2)(real_X + last, real_Y), blockSize);
+				ref_err = ref_err - x_left + x_last;
+			}
+
+			for (int y = closest.y; y < sWindow; y++) {
+				real_Y = currPoint.y + y;
+
+				if (is_in_bounds(real_X, real_Y, width, height, blockSize)) {
+					if (y == closest.y) {
+						//If Y is top left, nothing to negate from sum
+					}
+					else {
+						//If Y (col) has moved down then minus (X, Y - 1) and add (X, Y + (blockSize - 1))
+						int y_left = row_sum(prev, (int2)(real_X, real_Y - 1), blockSize);
+						int y_last = row_sum(prev, (int2)(real_X, real_Y + last), blockSize);
+						ref_err = ref_err - y_left + y_last;
+					}
+
+					err = absolute_difference(current_err, ref_err);// + (square(blockSize) * 2);
+
+					int2 refPoint = { real_X, real_Y };
+					//Weight results to preffer closer macroblocks
+					float newDistance = euclidean_distance(refPoint.x, currPoint.x, refPoint.y, currPoint.y);
+
+					//TODO: Calculate angle if point was on radius of blocksize/2 rather than radius of point to center distance
+					if (err < bestErr || (err == bestErr && newDistance <= distanceToBlock)) {
+						bestErr = err;
+						distanceToBlock = newDistance;
+						float p0x = currPoint.x, p0y = currPoint.y - sqrt((float)(square(refPoint.x - p0x) + square(refPoint.y - currPoint.y)));
+						float angle = (2 * atan2(refPoint.y - p0y, refPoint.x - p0x)) * 180 / M_PI;
+						motionVectors[idx] = refPoint;
+						motionDetails[idx] = (float2)(angle, distanceToBlock);
+					}
 				}
 			}
 		}
