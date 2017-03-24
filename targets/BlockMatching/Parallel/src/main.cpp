@@ -109,7 +109,8 @@ int main(int argc, char **argv)
 
 	//Timeout to wait for key press (< 1 Waits indef)
 	int cvWaitTime = 0;
-	char key;
+	char key = ' ';
+	int method = 1;
 
 	try {
 		do {
@@ -126,6 +127,7 @@ int main(int argc, char **argv)
 				if (loop) {
 					Capture.SetPos(0);
 					Capture >> curr;
+					motion_graph.Reset();
 					continue;
 				}
 
@@ -151,7 +153,7 @@ int main(int argc, char **argv)
 			cl::Buffer motionDetails(context, CL_MEM_WRITE_ONLY, sizeof(cl_float2) * bCount);
 
 			//Create motion_estimation kernel and set arguments 
-			cl::Kernel kernel(program, "full_exhastive");
+			cl::Kernel kernel(program, method == 0 ? "full_exhastive" : "full_exhastive_test");
 			kernel.setArg(0, prevImage);
 			kernel.setArg(1, currImage);
 			kernel.setArg(2, stepSize);
@@ -187,7 +189,7 @@ int main(int argc, char **argv)
 			motion_graph.AddData(averages[3]);
 			//Util::drawArrow(display, cv::Point(averages[0], averages[1]));
 
-			//Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
+			Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
 			//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
 
 			//Free pointer block
@@ -225,6 +227,10 @@ int main(int argc, char **argv)
 					wB = (width / blockSize * blockSize / stepSize) - 1;
 					hB = (height / blockSize * blockSize / stepSize) - 1;
 					bCount = wB * hB;
+					break;
+				case 'm':
+					method = method == 0 ? 1 : 0;
+					motion_graph.Reset();
 					break;
 				default:
 					break;

@@ -61,6 +61,7 @@ public:
 
 		for (int i = 0; i < this->normalised_points.size() - 1; ++i) {
 			float value = this->normalised_points.at(i), next = this->normalised_points.at(i + 1);
+
 			if (value > next && value > peak && this->PercentageDifference(value, peak) > 0.10) {
 				peak = value;
 				peak_pos = i;
@@ -80,6 +81,36 @@ public:
 
 		this->DrawLine(cv::Point(v_pos_x, this->padding), cv::Point(v_pos_x, this->height / 2), cv::Scalar(0, 0, 255));
 		this->DrawLine(cv::Point(p_pos_x, this->height / 2), cv::Point(p_pos_x, this->height - this->padding), cv::Scalar(0, 255, 255));
+	}
+
+	void DrawBeats() {
+		std::vector<int> beat_start_positions, beat_end_positions;
+
+		for (int i = 1; i < this->normalised_points.size() - 1; ++i) {
+			float prev = this->normalised_points.at(i - 1), 
+				value = this->normalised_points.at(i), 
+				next = this->normalised_points.at(i + 1);
+			double thresh = 0.02;
+			if (value > 0.5 - thresh && value < 0.5 + thresh) {
+				if (prev > value && value > next)
+					beat_start_positions.push_back(i);
+
+				if (prev < value && value < next)
+					beat_end_positions.push_back(i);
+			}
+		}
+
+		int x_gap = (this->x_end.x - this->x_start.x) / this->max_data_points;
+
+		for (int i = 0; i < beat_start_positions.size(); ++i) {
+			int pos_x = this->x_start.x + (beat_start_positions.at(i) * x_gap) + 1;
+			this->DrawLine(cv::Point(pos_x, this->padding), cv::Point(pos_x, this->height - this->padding), cv::Scalar(0, 0, 255));
+		}
+
+		for (int i = 0; i < beat_end_positions.size(); ++i) {
+			int pos_x = this->x_start.x + (beat_end_positions.at(i) * x_gap) + 1;
+			this->DrawLine(cv::Point(pos_x, this->padding), cv::Point(pos_x, this->height - this->padding), cv::Scalar(0, 255, 255));
+		}
 	}
 
 	template<typename T>
@@ -172,7 +203,7 @@ public:
 		this->DrawAxis();
 		this->DrawLabels();
 		this->DrawLines(this->points, this->pen);
-		this->DrawPeakValley();
+		this->DrawBeats();
 	}
 
 	void GetMinMax() {
@@ -203,6 +234,10 @@ public:
 
 			this->points.at(i) = cv::Point(x, y);
 		}
+	}
+
+	void Reset() {
+		this->data_points.clear();
 	}
 
 	void Show()
