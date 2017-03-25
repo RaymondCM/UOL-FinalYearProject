@@ -222,8 +222,9 @@ public:
 	}
 
 	void ConvertNormalisedToPoints() {
-		int x_gap = (this->x_end.x - this->x_start.x) / this->max_data_points;
-		int y_gap = (this->y_end.y - this->y_start.y);
+		int x_gap = round((this->x_end.x - this->x_start.x) / this->max_data_points);
+		int y_gap = round((this->y_end.y - this->y_start.y));
+
 
 		this->points = std::vector<cv::Point>(this->normalised_points.size());
 
