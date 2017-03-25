@@ -24,11 +24,18 @@ namespace BlockMatching {
 		return cv::sum(cv::abs(img(cv::Rect(p.x, p.y, blockSize, blockSize))))[0];
 	}
 
+	inline int MatrixSAD(const cv::Mat& curr, const cv::Mat& ref, const cv::Point& currPoint, const cv::Point& refPoint, const int& blockSize) {
+		return cv::sum(cv::abs(
+			curr(cv::Rect(currPoint.x, currPoint.y, blockSize, blockSize)) -
+			ref(cv::Rect(refPoint.x, refPoint.y, blockSize, blockSize))
+		))[0];
+	}
+
 	inline bool IsInBounds(int x, int y, int width, int height, int bSize) {
 		return y >= 0 && y < height - bSize && x >= 0 && x < width - bSize;
 	}
 
-	cv::Vec3i ClosestNeighbour(cv::Mat prev, cv::Point currPoint, const int sWindow, int width, int height, int blockSize) {
+	cv::Vec3i ClosestNeighbour(const cv::Mat& prev, const cv::Point& currPoint, const int sWindow, const int width, const int height, const int blockSize) {
 		for (int row = -sWindow; row < sWindow; row += sWindow) {
 			for (int col = -sWindow; col < sWindow; col += sWindow) {
 				cv::Point refPoint(currPoint.x + row, currPoint.y + col);
@@ -43,7 +50,7 @@ namespace BlockMatching {
 		return cv::Vec3i(0, 0, MatrixSum(prev, refPoint, blockSize));
 	}
 
-	void FullExhastive(cv::Mat& curr, cv::Mat& ref, cv::Point* &motionVectors, cv::Point2f* &motionDetails, int blockSize, int stepSize, int width, int height, int wB, int hB) {
+	void FullExhastiveADS(cv::Mat& curr, cv::Mat& ref, cv::Point* &motionVectors, cv::Point2f* &motionDetails, int blockSize, int stepSize, int width, int height, int wB, int hB) {
 		//Loop over all possible blocks in frame
 		for (int x = 0; x < wB; x++) {
 			for (int y = 0; y < hB; y++) {
@@ -72,6 +79,52 @@ namespace BlockMatching {
 
 							int ref_err = MatrixSum(ref, refPoint, blockSize);
 							err = AbsoluteDifference(current_err, ref_err);
+
+							//Take the lowest error, closeness is preffered.
+							float newDistance = euclideanDistance(refPoint.x, currPoint.x, refPoint.y, currPoint.y);
+
+							//Write buffer with the lowest error
+							if (err < bestErr || (err == bestErr && newDistance <= distanceToBlock)) {
+								bestErr = err;
+								distanceToBlock = newDistance;
+								float p0x = currPoint.x, p0y = currPoint.y - sqrt((float)(square(refPoint.x - p0x) + square(refPoint.y - currPoint.y)));
+								float angle = (2 * atan2(refPoint.y - p0y, refPoint.x - p0x)) * 180 / M_PI;
+								motionVectors[idx] = refPoint;
+								motionDetails[idx] = cv::Point2f(angle, distanceToBlock);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void FullExhastiveSAD(cv::Mat& curr, cv::Mat& ref, cv::Point* &motionVectors, cv::Point2f* &motionDetails, int blockSize, int stepSize, int width, int height, int wB, int hB) {
+		//Loop over all possible blocks in frame
+		for (int x = 0; x < wB; x++) {
+			for (int y = 0; y < hB; y++) {
+				//Reference point on current frame that will be searched for in the previous frame
+				const cv::Point currPoint(x * stepSize, y * stepSize);
+				int idx = x + y * wB;
+
+				const int sWindow = blockSize;
+				cv::Vec3i closest = ClosestNeighbour(ref, currPoint, sWindow, width, height, blockSize);
+				//int ref_err = closest[2];
+
+				float distanceToBlock = FLT_MAX;
+				int bestErr = INT_MAX, err;
+
+				//Loop over all possible blocks within each macroblock
+				for (int row = closest[0]; row < sWindow; row++) {
+					for (int col = closest[1]; col < sWindow; col++) {
+						//Refererence a block to search on the previous frame
+						cv::Point refPoint(currPoint.x + row, currPoint.y + col);
+
+						//Check if it lays within the bounds of the capture
+						if (IsInBounds(refPoint.x, refPoint.y, width, height, blockSize)) {
+							//Calculate SSD (Sum of square differences)
+
+							err = MatrixSAD(curr, ref, currPoint, refPoint, blockSize);
 
 							//Take the lowest error, closeness is preffered.
 							float newDistance = euclideanDistance(refPoint.x, currPoint.x, refPoint.y, currPoint.y);

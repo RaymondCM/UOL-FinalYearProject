@@ -23,6 +23,7 @@
 #include "Timer.hpp"
 #include "Utils.hpp"
 #include "SimpleGraph.hpp"
+#include "IO.hpp"
 
 int main(int argc, char **argv)
 {
@@ -41,7 +42,8 @@ int main(int argc, char **argv)
     std::string kernelFile = project_directory + "/opencl/kernels.cl";
 	std::string dataPath = root_directory + "/data/IM_0068-Bmode.dcm";
 	std::string dataPathVideo = root_directory + "/data/input.avi";
-	
+	std::string results_path = root_directory + "/results/raw/parallel/" + std::to_string(std::time(nullptr)) + ".txt";
+
 	//Get Context
     CLContext clUtil(argc, argv);
 	cl::Context context = clUtil.GetContext();
@@ -107,10 +109,14 @@ int main(int argc, char **argv)
 	//Create Real-Time graph to display average angular motion
 	SimpleGraph motion_graph(1024, 512, 128);
 
+	//Create File Writer
+	IO::Writer output_data(results_path);
+	output_data.AddLine("Angle 0-360", "Magnitude");
+
 	//Timeout to wait for key press (< 1 Waits indef)
-	int cvWaitTime = 0;
+	int cvWaitTime = 1;
 	char key = ' ';
-	int method = 1;
+	int method = 0;
 
 	try {
 		do {
@@ -125,6 +131,8 @@ int main(int argc, char **argv)
 			if (Capture.isLastFrame() || prev.empty() || curr.empty()) {
 				//Reset pointer to frame if loop
 				if (loop) {
+					output_data.Write();
+					output_data.NewFile(root_directory + "/results/raw/parallel/" + std::to_string(std::time(nullptr)) + ".txt");
 					Capture.SetPos(0);
 					Capture >> curr;
 					motion_graph.Reset();
@@ -153,7 +161,7 @@ int main(int argc, char **argv)
 			cl::Buffer motionDetails(context, CL_MEM_WRITE_ONLY, sizeof(cl_float2) * bCount);
 
 			//Create motion_estimation kernel and set arguments 
-			cl::Kernel kernel(program, method == 0 ? "full_exhastive" : "full_exhastive_test");
+			cl::Kernel kernel(program, method == 0 ? "full_exhastive_SAD" : "full_exhastive_ADS");
 			kernel.setArg(0, prevImage);
 			kernel.setArg(1, currImage);
 			kernel.setArg(2, stepSize);
@@ -189,8 +197,10 @@ int main(int argc, char **argv)
 			motion_graph.AddData(averages[3]);
 			//Util::drawArrow(display, cv::Point(averages[0], averages[1]));
 
-			Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
+			//Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
 			//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
+
+			output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[4]));
 
 			//Free pointer block
 			free(mVecBuffer);
@@ -207,7 +217,7 @@ int main(int argc, char **argv)
 			motion_graph.Show();
 
 			key = (char)cv::waitKey(cvWaitTime);
-
+			
 			switch (key) {
 				case 'p':
 					cvWaitTime = cvWaitTime == 0 ? 1 : 0;
