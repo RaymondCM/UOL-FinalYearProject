@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 		Util::drawMotionVectors(display, motionVectors, wB, hB, blockSize, stepSize);
 		//Util::visualiseMotionVectors(display, motionVectors, motionDetails, wB, hB, blockSize, stepSize, 127, 0.2);
 
-		output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[4]));
+		output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[2]));
 
 		//Free pointer block
 		free(motionVectors);

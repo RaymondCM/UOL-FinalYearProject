@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 			Capture >> curr;
 
 			//Break if invalid frames and no loop
-			if (Capture.isLastFrame() || prev.empty() || curr.empty()) {
+			if (prev.empty() || curr.empty()) {
 				//Reset pointer to frame if loop
 				if (loop) {
 					output_data.Write();
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
 			//Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
 			//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
 
-			output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[4]));
+			output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[2]));
 
 			//Free pointer block
 			free(mVecBuffer);
