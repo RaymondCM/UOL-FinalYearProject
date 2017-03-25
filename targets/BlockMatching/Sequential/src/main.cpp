@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <string>
+#include <ctime>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
@@ -13,17 +14,20 @@
 #include "Timer.hpp"
 #include "Utils.hpp"
 #include "SimpleGraph.hpp"
+#include "IO.hpp"
 
 int main(int argc, char **argv)
 {
-	std::string projectRoot(".");
+	std::string root_directory(".");
 
-#ifdef ROOT_DIR
-	projectRoot = ROOT_DIR;
-#endif
+	#ifdef ROOT_DIR
+		root_directory = ROOT_DIR;
+	#endif
 
-	std::string dataPath = projectRoot + "/data/IM_0068-Bmode.dcm";
-	std::string dataPathVideo = projectRoot + "/data/input.avi";
+	std::string dataPath = root_directory + "/data/IM_0068-Bmode.dcm";
+	std::string dataPathVideo = root_directory + "/data/input.avi";
+	std::time_t t = std::time(nullptr);
+	std::string results_path = root_directory + "/results/raw/sequential/" + std::to_string(std::time(nullptr)) + ".txt";
 
 	//Open Video Capture to File
 	//Dicom Capture(dataPath, true);
@@ -61,8 +65,12 @@ int main(int argc, char **argv)
 	//Create Real-Time graph to display average angular motion
 	SimpleGraph motion_graph(1024, 512, 128);
 
+	//Create File Writer
+	IO::Writer output_data(results_path);
+	output_data.AddLine("Angle 0-360", "Magnitude");
+
 	//Timeout to wait for key press (< 1 Waits indef)
-	int cvWaitTime = 0;
+	int cvWaitTime = 1;
 	char key;
 
 	do {
@@ -77,6 +85,8 @@ int main(int argc, char **argv)
 		if (prev.empty() || curr.empty()) {
 			//Reset pointer to frame if loop
 			if (loop) {
+				output_data.Write();
+				output_data.NewFile(root_directory + "/results/raw/sequential/" + std::to_string(std::time(nullptr)) + ".txt");
 				Capture.SetPos(0);
 				Capture >> curr;
 				continue;
@@ -94,7 +104,7 @@ int main(int argc, char **argv)
 		cv::Point2f * motionDetails = new cv::Point2f[bCount];
 
 		//Perform Block Matching
-		BlockMatching::FullExhastive(currGray, prevGray, motionVectors, motionDetails, blockSize, stepSize, width, height, wB, hB);
+		BlockMatching::FullExhastiveSAD(currGray, prevGray, motionVectors, motionDetails, blockSize, stepSize, width, height, wB, hB);
 
 		//Clock timer so FPS isn't inclusive of drawing onto the screen
 		pT.toc();
@@ -107,8 +117,10 @@ int main(int argc, char **argv)
 		motion_graph.AddData(averages[3]);
 		//Util::drawArrow(display, cv::Point(averages[0], averages[1]));
 
-		//Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
-		//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
+		Util::drawMotionVectors(display, motionVectors, wB, hB, blockSize, stepSize);
+		//Util::visualiseMotionVectors(display, motionVectors, motionDetails, wB, hB, blockSize, stepSize, 127, 0.2);
+
+		output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[4]));
 
 		//Free pointer block
 		free(motionVectors);
