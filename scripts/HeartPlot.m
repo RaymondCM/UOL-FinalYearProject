@@ -2,6 +2,9 @@
 clc;
 clear; 
 
+capture_rate = 50;
+ground_bpm = 98;
+
 %% Get File Path
 [file_name,file_root] = uigetfile('*.txt','Select the BlockMatching raw file');
 data_path = strcat(file_root,file_name);
@@ -28,6 +31,9 @@ y_power = abs(ffY(1:floor(n * max_frequency))) .^ 2; % Calc power of freq.
 freq = (1:n/2)/(n/2) * max_frequency; % Normalise X between 0 and 0.5
 period = 1./freq; % Will be the same as 1:size(Y)/2 * 2
 
+xIndex = find(y_power == max(y_power), 1, 'first');
+maxXValue = period(xIndex);
+
 %% Plot FFT and Original 
 figure('Name','Full Exhastive SAD Block Matching')
 subplot(2, 1, 1);
@@ -44,3 +50,52 @@ xlim([0 n])
 xlabel 'Heart Beats over Frames (Freq Hz)'
 ylabel 'Frequency Power (Amplitude)'
 title 'Fast Fourier Transform Frequencies'
+
+%% Estimate BPM over Samples
+n_steps = 4;
+x_step = floor(n / n_steps);
+
+p = 1;
+x = 0;
+
+data  = 1:n_steps;
+
+for x = 0 : n_steps - 1
+    ps = 1 + (x_step * x);
+    pe = ps + x_step;
+    
+    S = angles(ps:pe);
+    SX = 1:size(S);
+
+    SffY = fft(S); % Compute Fast Fourier Transform.
+    SffY(1) = []; % Discard first value as it's the sum of all the frequencies.
+    s_n = length(SffY);
+
+    max_freq = 0.5; % Data is mirorred after this point so discard it.
+    y_power = abs(SffY(1:floor(s_n * max_freq))) .^ 2; % Calc power of freq.
+
+    s_freq = (1:s_n/2)/(s_n/2) * max_frequency; % Normalise X between 0 and 0.5
+    s_period = 1./s_freq; % Will be the same as 1:size(Y)/2 * 2
+    
+    data(x+1) = s_period(find(y_power == max(y_power), 1, 'first'));
+    data(x+1) = (60 * capture_rate) * (data(x + 1) / 1000);
+end
+
+Y1 = data;
+Y2 = ground_bpm:ground_bpm+length(Y1)-1;
+Y2(Y2 > ground_bpm) = ground_bpm;
+
+%% Plot BPM over Time
+
+figure('Name','Full Exhastive SAD Block Matching')
+subplot(2, 1, 1);
+
+plot(1:length(Y1), Y1, 1:length(Y2), Y2)
+
+legend("Estimated BPM", "Ground Truth")
+ylim([80 120]);
+xticks(1:length(Y1))
+xticklabels({'1:126','126:252','252:378','378:504'})
+xlabel 'Data Split Range'
+ylabel 'BPM'
+title 'Estimated BPM vs Ground Truth'
