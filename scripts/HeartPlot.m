@@ -1,6 +1,6 @@
 %% Enviroment
 clc;
-clear; 
+clear;
 
 capture_rate = 50;
 ground_bpm = 98;
@@ -31,8 +31,7 @@ y_power = abs(ffY(1:floor(n * max_frequency))) .^ 2; % Calc power of freq.
 freq = (1:n/2)/(n/2) * max_frequency; % Normalise X between 0 and 0.5
 period = 1./freq; % Will be the same as 1:size(Y)/2 * 2
 
-xIndex = find(y_power == max(y_power), 1, 'first');
-maxXValue = period(xIndex);
+max_x = period(find(y_power == max(y_power), 1, 'first'));
 
 %% Plot FFT and Original 
 figure('Name','Full Exhastive SAD Block Matching')
@@ -77,22 +76,29 @@ for x = 0 : n_steps - 1
     s_freq = (1:s_n/2)/(s_n/2) * max_frequency; % Normalise X between 0 and 0.5
     s_period = 1./s_freq; % Will be the same as 1:size(Y)/2 * 2
     
+    s_period(find(y_power == max(y_power), 1, 'first'))
+    
     data(x+1) = s_period(find(y_power == max(y_power), 1, 'first'));
     data(x+1) = (60 * capture_rate) * (data(x + 1) / 1000);
 end
 
 Y1 = data;
-Y2 = ground_bpm:ground_bpm+length(Y1)-1;
-Y2(Y2 > ground_bpm) = ground_bpm;
+x_bpm = (60 * capture_rate) * (max_x / 1000);
+
+Y2 = x_bpm:x_bpm+length(Y1)-1;
+Y2(Y2 > x_bpm) =  x_bpm;
+
+Y3 = ground_bpm:ground_bpm+length(Y1)-1;
+Y3(Y3 > ground_bpm) = ground_bpm;
 
 %% Plot BPM over Time
 
 figure('Name','Full Exhastive SAD Block Matching')
 subplot(2, 1, 1);
 
-plot(1:length(Y1), Y1, 1:length(Y2), Y2)
+plot(1:length(Y1), Y1, 1:length(Y2), Y2, 1:length(Y3), Y3)
 
-legend("Estimated BPM", "Ground Truth")
+legend("Estimated BPM of Split data", "Overall BPM estimate", "Ground Truth")
 ylim([80 120]);
 xticks(1:length(Y1))
 xticklabels({'1:126','126:252','252:378','378:504'})
