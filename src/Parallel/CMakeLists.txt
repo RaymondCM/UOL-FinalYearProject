@@ -16,7 +16,6 @@ target_include_directories(Par_BlockMatching PUBLIC ${OpenCL_INCLUDE_DIR})
         
 #Commented out temporarily to fix VS2017 IDE intelisense error
 #TODO: Uncomment this line
-#target_include_directories(Par_BlockMatching PUBLIC ${BM_SHARED_LIBS})
 #target_include_directories(Par_BlockMatching PUBLIC ${DCMTK_INCLUDE_DIRS})
 #target_link_libraries(Par_BlockMatching ${DCMTK_LIBRARIES} )
 
