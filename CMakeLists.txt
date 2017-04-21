@@ -16,35 +16,19 @@ add_definitions(-DHAVE_CONFIG_H)
 find_package(DCMTK)
 
 if (WIN32)
-	SET(OpenCV_DIR C:/OpenCV)
+	SET(OpenCV_DIR C:/opencv)
 endif()
 
 find_package(OpenCV REQUIRED)
 
 #Set Variables to shared project files
-set(SHARED_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/targets/Shared/include")
-set(SHARED_SRC "${CMAKE_CURRENT_SOURCE_DIR}/targets/Shared/src")
+set(SHARED_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/src/Shared/include") 
+set(SHARED_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/Shared/src")
 
 #########################################################################################
 #--------------------------Build Block Matching Projects--------------------------------#
 #########################################################################################
 
-#Set Variables to inter-shared libraries
-set(BM_SHARED_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/targets/BlockMatching/Shared/include")
-set(BM_SHARED_SRC "${CMAKE_CURRENT_SOURCE_DIR}/targets/BlockMatching/Shared/src")
-
 #Add Project Subdirectories
-add_subdirectory(targets/BlockMatching/Sequential)
-add_subdirectory(targets/BlockMatching/Parallel)
-
-#########################################################################################
-#----------------------------Build Segmentation Projects--------------------------------#
-#########################################################################################
-
-#Set Variables to inter-shared libraries
-set(SEG_SHARED_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/targets/Segmentation/Shared/include")
-set(SEG_SHARED_SRC "${CMAKE_CURRENT_SOURCE_DIR}/targets/Segmentation/Shared/src")
-
-#Add Project Subdirectories
-add_subdirectory(targets/Segmentation/Sequential)
-add_subdirectory(targets/Segmentation/Parallel)
+add_subdirectory(src/Sequential)
+add_subdirectory(src/Parallel)
