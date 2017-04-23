@@ -10,6 +10,7 @@
 //#include "Dicom.hpp"
 
 #include "BlockMatching.hpp"
+#include "Drawing.hpp"
 #include "Capture.hpp"
 #include "Timer.hpp"
 #include "Utils.hpp"
@@ -112,13 +113,13 @@ int main(int argc, char **argv)
 		cv::Mat display = curr.clone();
 
 		//Draw Motion Vectors from mVecBuffer
-		//Util::drawGraph(motionVectors, motionDetails);
+
 		cv::Vec4f averages = Util::analyseData(motionVectors, motionDetails, wB * hB);
 		motion_graph.AddData(averages[3]);
-		//Util::drawArrow(display, cv::Point(averages[0], averages[1]));
+		//Draw::Arrow(display, cv::Point(averages[0], averages[1]));
 
-		Util::drawMotionVectors(display, motionVectors, wB, hB, blockSize, stepSize);
-		//Util::visualiseMotionVectors(display, motionVectors, motionDetails, wB, hB, blockSize, stepSize, 127, 0.2);
+		Draw::MotionVectors(display, motionVectors, wB, hB, blockSize, stepSize);
+		Draw::MotionVectorHSVAngles(display, motionVectors, motionDetails, wB, hB, blockSize, stepSize, 127, 0.2);
 
 		output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[2]));
 
@@ -130,7 +131,7 @@ int main(int argc, char **argv)
 		rT.toc();
 
 		//Display program information on frame
-		Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize),
+		Draw::Text(display, std::to_string(Capture.GetPos()), std::to_string(blockSize),
 			std::to_string(stepSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
 
 		//Display visualisation of motion vectors
