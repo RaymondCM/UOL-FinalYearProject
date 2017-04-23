@@ -27,6 +27,45 @@ public:
 		this->DrawAxis();
 	}
 
+	void Invalidate() {
+		this->canvas.setTo(0);
+		this->DrawAxis();
+		this->DrawLabels();
+		this->DrawLines(this->coordinates, this->pen);
+		//this->DrawBeats();
+	}
+
+	void AddData(float datapoint)
+	{
+		this->data_points.push_back(datapoint);
+
+		if (this->data_points.size() > this->max_data_points) {
+			this->data_points.erase(this->data_points.begin(), this->data_points.begin() + this->data_points.size() - this->max_data_points);
+		}
+
+		this->GetMinMax();
+		this->NormaliseData();
+		this->ConvertNormalisedToPoints();
+		this->Invalidate();
+	}
+
+	void Reset() {
+		this->data_points.clear();
+	}
+
+	void Show()
+	{
+		cv::imshow("SimpleGraph", canvas);
+	}
+private:
+	cv::Mat canvas;
+	std::vector<float> data_points, normalised_points;
+	std::vector<cv::Point> coordinates;
+	int max_data_points, width, height, padding, font_face, intermediate_labels_count;
+	float min_x, min_y, max_x, max_y, font_scale, baseline;
+	cv::Point y_start, x_start, y_end, x_end;
+	cv::Scalar axis_colour, pen, eraser;
+
 	void DrawAxis()
 	{
 		this->x_start = cv::Point(0 + this->padding, this->height / 2);
@@ -43,7 +82,7 @@ public:
 		cv::line(this->canvas, p1, p2, colour, thickness, line_type, shift);
 	}
 
-	void DrawLines(std::vector<cv::Point> p, cv::Scalar& colour, int thickness = 1, int line_type = 8, int shift = 0)
+	void DrawLines(std::vector<cv::Point> p, cv::Scalar& colour, int thickness = 2, int line_type = 8, int shift = 0)
 	{
 		for (int i = 0; i < p.size() - 1; ++i) {
 			cv::line(this->canvas, p.at(i), p.at(i + 1), colour, thickness, line_type, shift);
@@ -87,8 +126,8 @@ public:
 		std::vector<int> beat_start_positions, beat_end_positions;
 
 		for (int i = 1; i < this->normalised_points.size() - 1; ++i) {
-			float prev = this->normalised_points.at(i - 1), 
-				value = this->normalised_points.at(i), 
+			float prev = this->normalised_points.at(i - 1),
+				value = this->normalised_points.at(i),
 				next = this->normalised_points.at(i + 1);
 			double thresh = 0.02;
 			if (value > 0.5 - thresh && value < 0.5 + thresh) {
@@ -184,28 +223,6 @@ public:
 		return cv::getTextSize(label, this->font_face, this->font_scale, 1, 0);
 	}
 
-	void AddData(float datapoint)
-	{
-		this->data_points.push_back(datapoint);
-
-		if (this->data_points.size() > this->max_data_points) {
-			this->data_points.erase(this->data_points.begin(), this->data_points.begin() + this->data_points.size() - this->max_data_points);
-		}
-
-		this->GetMinMax();
-		this->NormaliseData();
-		this->ConvertNormalisedToPoints();
-		this->Invalidate();
-	}
-
-	void Invalidate() {
-		this->canvas.setTo(0);
-		this->DrawAxis();
-		this->DrawLabels();
-		this->DrawLines(this->points, this->pen);
-		this->DrawBeats();
-	}
-
 	void GetMinMax() {
 		this->min_x = 0;
 		this->max_x = this->max_data_points;
@@ -226,31 +243,14 @@ public:
 		int y_gap = round((this->y_end.y - this->y_start.y));
 
 
-		this->points = std::vector<cv::Point>(this->normalised_points.size());
+		this->coordinates = std::vector<cv::Point>(this->normalised_points.size());
 
 		for (int i = 0; i < normalised_points.size(); ++i) {
 			int x = 0, y = 0;
 			x = this->x_start.x + (i * x_gap) + 1;
 			y = this->y_start.y + normalised_points.at(i) * y_gap;
 
-			this->points.at(i) = cv::Point(x, y);
+			this->coordinates.at(i) = cv::Point(x, y);
 		}
 	}
-
-	void Reset() {
-		this->data_points.clear();
-	}
-
-	void Show()
-	{
-		cv::imshow("SimpleGraph", canvas);
-	}
-private:
-	cv::Mat canvas;
-	std::vector<float> data_points, normalised_points;
-	std::vector<cv::Point> points;
-	int max_data_points, width, height, padding, font_face, intermediate_labels_count;
-	float min_x, min_y, max_x, max_y, font_scale, baseline;
-	cv::Point y_start, x_start, y_end, x_end;
-	cv::Scalar axis_colour, pen, eraser;
 };
