@@ -19,6 +19,7 @@
 //#include "Dicom.hpp"
 
 #include "CLContext.hpp"
+#include "Drawing.hpp"
 #include "Capture.hpp"
 #include "Timer.hpp"
 #include "Utils.hpp"
@@ -28,24 +29,24 @@
 int main(int argc, char **argv)
 {
 
-    std::string root_directory(".");
-    std::string project_directory(".");
+	std::string root_directory(".");
+	std::string project_directory(".");
 
-	#ifdef ROOT_DIR
+#ifdef ROOT_DIR
 	root_directory = ROOT_DIR;
-	#endif
+#endif
 
-	#ifdef PROJECT_ROOT
-		project_directory = PROJECT_ROOT;
-	#endif
+#ifdef PROJECT_ROOT
+	project_directory = PROJECT_ROOT;
+#endif
 
-    std::string kernelFile = project_directory + "/opencl/kernels.cl";
+	std::string kernelFile = project_directory + "/opencl/kernels.cl";
 	std::string dataPath = root_directory + "/data/IM_0068-Bmode.dcm";
 	std::string dataPathVideo = root_directory + "/data/input.avi";
 	std::string results_path = root_directory + "/results/raw/parallel/" + std::to_string(std::time(nullptr)) + ".txt";
 
 	//Get Context
-    CLContext clUtil(argc, argv);
+	CLContext clUtil(argc, argv);
 	cl::Context context = clUtil.GetContext();
 
 	//Load and build kernel file (device code)
@@ -174,7 +175,7 @@ int main(int argc, char **argv)
 			//Queue kernel with global range spanning all blocks
 			cl::NDRange global((size_t)wB, (size_t)hB, 1);
 			queue.enqueueNDRangeKernel(kernel, 0, global, cl::NullRange);
-			
+
 			//queue.finish();
 
 			//TODO: declare outside loop
@@ -192,58 +193,58 @@ int main(int argc, char **argv)
 			cv::Mat display = curr.clone();
 
 			//Draw Motion Vectors from mVecBuffer
-			//Util::drawGraph(motionVectors, motionDetails);
 			cv::Vec4f averages = Util::analyseData(mVecBuffer, mDetailsBuffer, wB * hB);
 			motion_graph.AddData(averages[3]);
-			//Util::drawArrow(display, cv::Point(averages[0], averages[1]));
 
-			//Util::drawMotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
-			//Util::visualiseMotionVectors(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
+			//Draw::Arrow(display, cv::Point(averages[0], averages[1]));
+
+			//Draw::MotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
+			//Draw::MotionVectorHSVAngles(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
 
 			output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[2]));
 
 			//Free pointer block
 			free(mVecBuffer);
 			free(mDetailsBuffer);
-			
+
 			//Finish render timer
 			rT.toc();
 
 			//Display program information on frame
-			Util::drawText(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(stepSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
+			Draw::Text(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(stepSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
 
 			//Display visualisation of motion vectors
 			cv::imshow(winname, display);
 			motion_graph.Show();
 
 			key = (char)cv::waitKey(cvWaitTime);
-			
+
 			switch (key) {
-				case 'p':
-					cvWaitTime = cvWaitTime == 0 ? 1 : 0;
-					break;
-				case '+':
-					bID = bID < bSizes.size() - 1 ? bID + 1 : bID;
-					blockSize = bSizes.at(bID);
-					stepSize = Util::getStepSize(blockSize);
-					wB = (width / blockSize * blockSize / stepSize) - 1;
-					hB = (height / blockSize * blockSize / stepSize) - 1;
-					bCount = wB * hB;
-					break;
-				case '-':
-					bID = bID > 0 ? bID - 1 : 0;
-					blockSize = bSizes.at(bID);
-					stepSize = Util::getStepSize(blockSize);
-					wB = (width / blockSize * blockSize / stepSize) - 1;
-					hB = (height / blockSize * blockSize / stepSize) - 1;
-					bCount = wB * hB;
-					break;
-				case 'm':
-					method = method == 0 ? 1 : 0;
-					motion_graph.Reset();
-					break;
-				default:
-					break;
+			case 'p':
+				cvWaitTime = cvWaitTime == 0 ? 1 : 0;
+				break;
+			case '+':
+				bID = bID < bSizes.size() - 1 ? bID + 1 : bID;
+				blockSize = bSizes.at(bID);
+				stepSize = Util::getStepSize(blockSize);
+				wB = (width / blockSize * blockSize / stepSize) - 1;
+				hB = (height / blockSize * blockSize / stepSize) - 1;
+				bCount = wB * hB;
+				break;
+			case '-':
+				bID = bID > 0 ? bID - 1 : 0;
+				blockSize = bSizes.at(bID);
+				stepSize = Util::getStepSize(blockSize);
+				wB = (width / blockSize * blockSize / stepSize) - 1;
+				hB = (height / blockSize * blockSize / stepSize) - 1;
+				bCount = wB * hB;
+				break;
+			case 'm':
+				method = method == 0 ? 1 : 0;
+				motion_graph.Reset();
+				break;
+			default:
+				break;
 			}
 		} while (key != 27); //Do while !Esc
 	}
