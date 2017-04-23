@@ -2,11 +2,29 @@
 clc;
 clear;
 
-capture_rate = 50;
-ground_bpm = 98;
+%% Read in DICOM file and get heart rate
+
+[file_name, root] = uigetfile('*.dcm');
+file_path = strcat(root, file_name);
+info = dicominfo(file_path);
+images = dicomread(info);
+ground_bpm = info.HeartRate;
+
+%% Get Input for Capture Rate
+
+% Show an image so that the capture rate is displayed
+imshow(images(:,:,:,1));
+
+% Ask the user to input the capture rate (default is 50Hz)
+input = inputdlg('What is the capture rate?', ...
+    'Input Capture Rate', 1, {'50'});
+capture_rate = str2double(input{:});
+
+% Close all windows
+close all;
 
 %% Get File Path
-[file_name,file_root] = uigetfile('*.txt','Select the BlockMatching raw file');
+[file_name,file_root] = uigetfile('*.txt');
 data_path = strcat(file_root,file_name);
 
 %% Read and parse file
@@ -98,7 +116,7 @@ subplot(2, 1, 1);
 
 plot(1:length(Y1), Y1, 1:length(Y2), Y2, 1:length(Y3), Y3)
 
-legend("Estimated BPM of Split data", "Overall BPM estimate", "Ground Truth")
+legend('Estimated BPM of Split data', 'Overall BPM estimate', 'Ground Truth')
 ylim([80 120]);
 xticks(1:length(Y1))
 xticklabels({'1:126','126:252','252:378','378:504'})
