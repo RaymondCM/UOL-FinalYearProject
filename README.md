@@ -27,7 +27,7 @@ sudo make install
 
 ### OpenCV
 #### Windows
-Download the [OpenCV](https://github.com/opencv/opencv) source and build with cmake (See instructions below). Build the binaries for debug and release to "C:/OpenCV/build" with OPENCL. Build INSTALL to produce system headers and dynamic linked libraries. Add a system environment variable to the installed OpenCV_DIR (C:\OpenCV\build\install\x86\vc15 for Visual Studio 15 2017). Finally add a variable to system PATH (%OpenCV_DIR%/bin). See OpenCV [documentation](http://docs.opencv.org/2.4/doc/tutorials/introduction/windows_visual_studio_Opencv/windows_visual_studio_Opencv.html) for guidelines and resources.
+Follow instructions at [RaymondKirk/OpenCV-InstallScript](https://github.com/RaymondKirk/OpenCV-InstallScript) or download the [OpenCV](https://github.com/opencv/opencv) source and build with cmake (See instructions below). Build the binaries for debug and release to "C:/OpenCV/build" with OPENCL. Build INSTALL to produce system headers and dynamic linked libraries. Add a system environment variable to the installed OpenCV_DIR (C:\OpenCV\build\install\x86\vc15 for Visual Studio 15 2017). Finally add a variable to system PATH (%OpenCV_DIR%/bin). See OpenCV [documentation](http://docs.opencv.org/2.4/doc/tutorials/introduction/windows_visual_studio_Opencv/windows_visual_studio_Opencv.html) for guidelines and resources.
 
 To build use CMake-GUI with these options WITH_CUDA=0, WITH_OPENCL=1 and BUILD_opencv_java=0. Optionally add both python interpreters.
 
