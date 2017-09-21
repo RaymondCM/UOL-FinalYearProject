@@ -1,5 +1,16 @@
 # ParallelCardiacImaging
 
+Presented is a GPU implementation of a Full Search Block Matching Motion
+Estimation algorithm using sum of absolute difference error criterion and a novel criterion to find
+optimal block displacement, and to estimate the heart rate of apical four chamber
+view ultrasound images. With the rapid growth of GPU processing power in recent
+years an effective deployment medium for parallelisation of traditionally serial
+algorithms exists. This project will attempt to evaluate the feasibility of using heterogeneous
+systems for motion estimation by comparing algorithm execution times
+and accuracy on the CPU and GPU. This thesis concludes by showing the GPU implementation
+is sufficiently fast enough for real-time processing and can shorten
+computation time of accurate heart rate estimates by a factor of 450 times ([Link](https://github.com/RaymondKirk/UOL-FinalYearProject/blob/master/uol-finalyearthesis.pdf)).
+
 ## Dependencies		
 ### DCMTK 		
 Instructions below for Ubuntu 14.04, the stable release has [compiler issues](http://forum.dcmtk.org/viewtopic.php?f=1&t=4235) so a snapshot from GitHub is used. 
@@ -16,7 +27,7 @@ sudo make install
 
 ### OpenCV
 #### Windows
-Download the [OpenCV](https://github.com/opencv/opencv) source and build with cmake (See instructions below). Build the binaries for debug and release to "C:/OpenCV/build" with OPENCL. Build INSTALL to produce system headers and dynamic linked libraries. Add a system environment variable to the installed OpenCV_DIR (C:\OpenCV\build\install\x86\vc15 for Visual Studio 15 2017). Finally add a variable to system PATH (%OpenCV_DIR%/bin). See OpenCV [documentation](http://docs.opencv.org/2.4/doc/tutorials/introduction/windows_visual_studio_Opencv/windows_visual_studio_Opencv.html) for guidelines and resources.
+Follow instructions at [RaymondKirk/OpenCV-InstallScript](https://github.com/RaymondKirk/OpenCV-InstallScript) or download the [OpenCV](https://github.com/opencv/opencv) source and build with cmake (See instructions below). Build the binaries for debug and release to "C:/OpenCV/build" with OPENCL. Build INSTALL to produce system headers and dynamic linked libraries. Add a system environment variable to the installed OpenCV_DIR (C:\OpenCV\build\install\x86\vc15 for Visual Studio 15 2017). Finally add a variable to system PATH (%OpenCV_DIR%/bin). See OpenCV [documentation](http://docs.opencv.org/2.4/doc/tutorials/introduction/windows_visual_studio_Opencv/windows_visual_studio_Opencv.html) for guidelines and resources.
 
 To build use CMake-GUI with these options WITH_CUDA=0, WITH_OPENCL=1 and BUILD_opencv_java=0. Optionally add both python interpreters.
 
