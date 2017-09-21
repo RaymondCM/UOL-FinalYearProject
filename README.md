@@ -1,5 +1,16 @@
 # ParallelCardiacImaging
 
+Presented is a GPU implementation of a Full Search Block Matching Motion
+Estimation algorithm using sum of absolute difference error criterion and a novel criterion to find
+optimal block displacement, and to estimate the heart rate of apical four chamber
+view ultrasound images. With the rapid growth of GPU processing power in recent
+years an effective deployment medium for parallelisation of traditionally serial
+algorithms exists. This project will attempt to evaluate the feasibility of using heterogeneous
+systems for motion estimation by comparing algorithm execution times
+and accuracy on the CPU and GPU. This thesis concludes by showing the GPU implementation
+is sufficiently fast enough for real-time processing and can shorten
+computation time of accurate heart rate estimates by a factor of 450 times ([Link](https://github.com/RaymondKirk/UOL-FinalYearProject/blob/master/uol-finalyearthesis.pdf)).
+
 ## Dependencies		
 ### DCMTK 		
 Instructions below for Ubuntu 14.04, the stable release has [compiler issues](http://forum.dcmtk.org/viewtopic.php?f=1&t=4235) so a snapshot from GitHub is used. 
