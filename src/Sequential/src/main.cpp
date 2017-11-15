@@ -74,6 +74,8 @@ int main(int argc, char **argv)
 	int cvWaitTime = 1;
 	char key;
 
+	bool draw_motion_vectors = false, draw_hsv = false;
+
 	do {
 		//Start timer
 		pT.tic();
@@ -118,8 +120,11 @@ int main(int argc, char **argv)
 		motion_graph.AddData(averages[3]);
 		//Draw::Arrow(display, cv::Point(averages[0], averages[1]));
 
-		Draw::MotionVectors(display, motionVectors, wB, hB, blockSize, stepSize);
-		Draw::MotionVectorHSVAngles(display, motionVectors, motionDetails, wB, hB, blockSize, stepSize, 127, 0.2);
+		if(draw_motion_vectors)
+			Draw::MotionVectors(display, motionVectors, wB, hB, blockSize, stepSize);
+
+		if(draw_hsv)
+			Draw::MotionVectorHSVAngles(display, motionVectors, motionDetails, wB, hB, blockSize, stepSize, 127, 0.2);
 
 		output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[2]));
 
@@ -159,6 +164,12 @@ int main(int argc, char **argv)
 			wB = (width / blockSize * blockSize / stepSize) - 1;
 			hB = (height / blockSize * blockSize / stepSize) - 1;
 			bCount = wB * hB;
+			break;
+		case 'd':
+			draw_motion_vectors = !draw_motion_vectors;
+			break;
+		case 'h':
+			draw_hsv = !draw_hsv;
 			break;
 		default:
 			break;

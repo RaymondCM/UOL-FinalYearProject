@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 
 	//Create output Window and use Parallel as unique winname
 	std::string winname("Parallel");
-	cv::namedWindow(winname, cv::WINDOW_FREERATIO);
+	cv::namedWindow(winname, cv::WINDOW_AUTOSIZE);
 	cv::setMouseCallback(winname, Util::MouseCallback, NULL);
 
 	//Should the image file loop?
@@ -118,6 +118,7 @@ int main(int argc, char **argv)
 	int cvWaitTime = 1;
 	char key = ' ';
 	int method = 0;
+	bool draw_motion_vectors = false, draw_hsv = false;
 
 	try {
 		do {
@@ -198,8 +199,11 @@ int main(int argc, char **argv)
 
 			//Draw::Arrow(display, cv::Point(averages[0], averages[1]));
 
-			//Draw::MotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
-			//Draw::MotionVectorHSVAngles(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
+			if(draw_motion_vectors)
+				Draw::MotionVectors(display, mVecBuffer, wB, hB, blockSize, stepSize);
+
+			if(draw_hsv)
+				Draw::MotionVectorHSVAngles(display, mVecBuffer, mDetailsBuffer, wB, hB, blockSize, stepSize, 127, 0.2);
 
 			output_data.AddLine(std::to_string(averages[3]), std::to_string(averages[2]));
 
@@ -242,6 +246,12 @@ int main(int argc, char **argv)
 			case 'm':
 				method = method == 0 ? 1 : 0;
 				motion_graph.Reset();
+				break;
+			case 'd':
+				draw_motion_vectors = !draw_motion_vectors;
+				break;
+			case 'h':
+				draw_hsv = !draw_hsv;
 				break;
 			default:
 				break;
