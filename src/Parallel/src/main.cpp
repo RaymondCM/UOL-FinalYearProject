@@ -79,12 +79,29 @@ int main(int argc, char **argv)
 	cv::Mat prev, curr, prevGray, currGray;
 	Capture >> curr;
 
+	//Select ROI
+	cv::Rect roi;
+	bool set_roi = true;
+
+	if (set_roi)
+	{
+		std::string winname("Press' Y' or 'y' when ROI selection has been made");
+		cv::namedWindow(winname, cv::WINDOW_AUTOSIZE);
+
+		cv::imshow(winname, curr);
+		cv::setMouseCallback(winname, Util::ROIMouseCallback, nullptr);
+		roi = Util::WaitForROI(winname, curr);
+
+		cv::destroyWindow(winname);
+		curr = curr(roi);
+	}
+
 	//Define BM parameters
-	int width = Capture.GetWidth(), height = Capture.GetHeight(), frame_count = Capture.GetFrameCount();
+	int width = curr.size().width, height = curr.size().height, frame_count = Capture.GetFrameCount();
 
 	//Get all possible block sizes
 	std::vector<int> bSizes = Util::getBlockSizes(width, height);
-	int  bID = 5, blockSize = bSizes.at(bID);
+	int  bID = 1, blockSize = bSizes.at(bID);
 	int stepSize = Util::getStepSize(blockSize);
 
 	//Minus one because last block along x * stepSize + y * stepSize * wB will always be out of bounds
@@ -98,7 +115,6 @@ int main(int argc, char **argv)
 	//Create output Window and use Parallel as unique winname
 	std::string winname("Parallel");
 	cv::namedWindow(winname, cv::WINDOW_AUTOSIZE);
-	cv::setMouseCallback(winname, Util::MouseCallback, NULL);
 
 	//Should the image file loop?
 	bool loop = true;
@@ -143,6 +159,9 @@ int main(int argc, char **argv)
 
 				break;
 			}
+
+			if (set_roi)
+				curr = curr(roi);
 
 			//Convert frames to grayscale for faster processing. Keep original data for visualisation
 			cv::cvtColor(prev, prevGray, cv::COLOR_BGR2GRAY);
@@ -215,8 +234,8 @@ int main(int argc, char **argv)
 			rT.toc();
 
 			//Display program information on frame
-			Draw::Text(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(stepSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
-
+			//Draw::Text(display, std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(stepSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
+			motion_graph.DrawInfoText(std::to_string(Capture.GetPos()), std::to_string(blockSize), std::to_string(stepSize), std::to_string(pT.getFPSFromElapsed()), std::to_string(rT.getFPSFromElapsed()));
 			//Display visualisation of motion vectors
 			cv::imshow(winname, display);
 			motion_graph.Show();

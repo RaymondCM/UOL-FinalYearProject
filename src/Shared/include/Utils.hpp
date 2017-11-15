@@ -62,19 +62,58 @@ namespace Util {
 		return cv::Vec4f(average_point.x, average_point.y, average_magnitude, average_angle);
 	}
 
-	void MouseCallback(int event, int x, int y, int flags, void* userdata)
+	cv::Point down_point(0, 0), up_point(0, 0);
+	bool down = false, up = false, roi_done = false;
+
+	void ROIMouseCallback(int event, int x, int y, int flags, void* userdata)
 	{
 		switch (event) {
 		case(cv::EVENT_LBUTTONDOWN):
+			if (!down) {
+				up = false;
+				down = true;
+				down_point = cv::Point(x, y);
+			}
 			break;
-		case(cv::EVENT_RBUTTONDOWN):
-			break;
-		case(cv::EVENT_MBUTTONDOWN):
+		case(cv::EVENT_LBUTTONUP):
+			if(!up)
+			{
+				down = false;
+				up = true;
+				up_point = cv::Point(x, y);
+			}
 			break;
 		case(cv::EVENT_MOUSEMOVE):
-			break;
+			if(down && !up)
+				up_point = cv::Point(x, y);
 		default:
 			break;
 		}
+	}
+
+	cv::Rect WaitForROI(std::string winname, cv::Mat image)
+	{
+		cv::Mat original = image.clone();
+
+		while(!roi_done)
+		{
+			image = original.clone();
+
+			if(down_point != up_point)
+				cv::rectangle(image, down_point, up_point, cv::Scalar(255));
+
+			cv::imshow(winname, image);
+			if(std::tolower(static_cast<char>(cv::waitKey(1))) == 'y')
+			{
+				roi_done = true;
+				int round_to = 10;
+				down_point.x = ((down_point.x + round_to / 2) / round_to) * round_to;
+				down_point.y = ((down_point.y + round_to / 2) / round_to) * round_to;
+				up_point.x = ((up_point.x + round_to / 2) / round_to) * round_to;
+				up_point.y = ((up_point.y + round_to / 2) / round_to) * round_to;
+			}
+		}
+
+		return cv::Rect(down_point, up_point);
 	}
 }

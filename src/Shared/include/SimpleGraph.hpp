@@ -57,6 +57,11 @@ public:
 	{
 		cv::imshow("SimpleGraph", canvas);
 	}
+
+	void DrawInfoText(std::string f, std::string bS, std::string sS, std::string processed_fps, std::string rendered_fps) {
+		std::string label("Frame " + f + ", Block Size: " + bS + ", Step Size: " + sS + ", Processed FPS: " + processed_fps + ", Rendered FPS: " + rendered_fps);
+		cv::putText(this->canvas, label, cv::Point(20, this->height - 20), this->font_face, this->font_scale, this->pen);
+	}
 private:
 	cv::Mat canvas;
 	std::vector<float> data_points, normalised_points;
