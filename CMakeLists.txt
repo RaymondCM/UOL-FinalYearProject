@@ -16,7 +16,8 @@ add_definitions(-DHAVE_CONFIG_H)
 find_package(DCMTK)
 
 if (WIN32)
-	SET(OpenCV_DIR C:/opencv)
+	SET(OpenCV_DIR C:\\lib\\Install\\opencv\\x64\\vc15\\lib)
+	
 endif()
 
 find_package(OpenCV REQUIRED)
