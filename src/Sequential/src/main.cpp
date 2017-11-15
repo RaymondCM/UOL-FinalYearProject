@@ -38,12 +38,29 @@ int main(int argc, char **argv)
 	cv::Mat prev, curr, prevGray, currGray;
 	Capture >> curr;
 
+	//Select ROI
+	cv::Rect roi;
+	bool set_roi = true;
+
+	if (set_roi)
+	{
+		std::string winname("Press' Y' or 'y' when ROI selection has been made");
+		cv::namedWindow(winname, cv::WINDOW_AUTOSIZE);
+
+		cv::imshow(winname, curr);
+		cv::setMouseCallback(winname, Util::ROIMouseCallback, nullptr);
+		roi = Util::WaitForROI(winname, curr);
+
+		cv::destroyWindow(winname);
+		curr = curr(roi);
+	}
+
 	//Define BM parameters
-	int width = Capture.GetWidth(), height = Capture.GetHeight(), frame_count = Capture.GetFrameCount();
+	int width = curr.size().width, height = curr.size().height, frame_count = Capture.GetFrameCount();
 
 	//Get all possible block sizes
 	std::vector<int> bSizes = Util::getBlockSizes(width, height);
-	int  bID = 5, blockSize = bSizes.at(bID);
+	int bID = bSizes.size() >= 2 ? 1 : 0, blockSize = bSizes.at(bID);
 	int stepSize = Util::getStepSize(blockSize);
 
 	//Minus one because last block along x * stepSize + y * stepSize * wB will always be out of bounds
@@ -53,8 +70,7 @@ int main(int argc, char **argv)
 
 	//Create output Window and use Sequential as unique winname
 	std::string winname("Sequential");
-	cv::namedWindow(winname, cv::WINDOW_FREERATIO);
-	cv::setMouseCallback(winname, Util::MouseCallback, NULL);
+	cv::namedWindow(winname, cv::WINDOW_AUTOSIZE);
 
 	//Should the image file loop?
 	bool loop = true;
@@ -97,6 +113,9 @@ int main(int argc, char **argv)
 
 			break;
 		}
+
+		if (set_roi)
+			curr = curr(roi);
 
 		//Convert frames to grayscale for faster processing. Keep original data for visualisation
 		cv::cvtColor(prev, prevGray, cv::COLOR_BGR2GRAY);

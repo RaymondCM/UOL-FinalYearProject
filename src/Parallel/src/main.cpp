@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 
 	//Get all possible block sizes
 	std::vector<int> bSizes = Util::getBlockSizes(width, height);
-	int  bID = 1, blockSize = bSizes.at(bID);
+	int  bID = bSizes.size() >= 2 ? 1 : 0, blockSize = bSizes.at(bID);
 	int stepSize = Util::getStepSize(blockSize);
 
 	//Minus one because last block along x * stepSize + y * stepSize * wB will always be out of bounds
