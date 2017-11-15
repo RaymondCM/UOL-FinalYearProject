@@ -11,6 +11,16 @@ and accuracy on the CPU and GPU. This thesis concludes by showing the GPU implem
 is sufficiently fast enough for real-time processing and can shorten
 computation time of accurate heart rate estimates by a factor of 450 times ([Link](https://github.com/RaymondKirk/UOL-FinalYearProject/blob/master/uol-finalyearthesis.pdf)).
 
+## Execution
+
+You can run the software in two different modes, ROI selection and fullscreen. ROI selection mode will prompt the user to select a region for analysis and the fullscreen mode will perform analysis on the whole image. This property can be changed by setting the ```set_roi``` flag to true in ```main.cpp```. Below are two examples of the modes, the fullscreen mode also demonstrates motion vector plotting and HSV plotting.
+
+#### Fullscreen
+![Fullscreen](https://user-images.githubusercontent.com/16948324/32838923-836c1178-ca0a-11e7-9199-245079b25dec.gif)
+
+#### ROI Selection
+![ROI Selection](https://user-images.githubusercontent.com/16948324/32838050-a5a676f0-ca07-11e7-8de5-072c9d63eec5.gif)
+
 ## Dependencies		
 ### DCMTK 		
 Instructions below for Ubuntu 14.04, the stable release has [compiler issues](http://forum.dcmtk.org/viewtopic.php?f=1&t=4235) so a snapshot from GitHub is used. 
